@@ -29,6 +29,11 @@ export default function ContactModal({ isOpen, plan = 'Pro', onClose }: Props) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    if (!supabase) {
+      setLoading(false)
+      setError('Servicio no configurado. Contactanos a hola@inteliarstack.com')
+      return
+    }
     const { error: dbError } = await supabase.from('leads').insert({
       name:    form.name,
       email:   form.email,
