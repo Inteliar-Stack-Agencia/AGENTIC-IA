@@ -81,8 +81,36 @@ El proyecto tiene tres autores en paralelo (capítulos, reconciliaciones, archit
 | AR029 | Memory no es historial, es contexto estructurado | AR-012 |
 | AR030 | Toda memoria debe tener un propósito | AR-012 |
 | AR031 | Active Memory (memoria proactiva) | AR-012 |
+| AR035 | El Capability Catalog es la fuente oficial | AR-014 |
+| AR036 | Universal Capability Language (UCL) | AR-014 |
+| AR037 | El Stack es la unidad oficial de distribución | AR-015 |
+| AR038 | Todo Stack debe poder descomponerse completamente | AR-015 |
+| AR039 | Stack as Product | AR-015 |
+| AR040 | Dual Interface Requirement | AR-016 |
+| AR041 | Mode Abstraction | AR-016 |
+| AR042 | Inteliar is the Business Design Platform | AR-016 |
 
 > Todos aceptados (`Accepted`). El texto completo de cada uno vive en su documento AR.
+
+## Índice — Engineering Standards (`ADR-ENGXX`)
+
+| ADR | Título | Documento |
+|-----|--------|-----------|
+| ENG001 | Repository as Contract | ES-001 |
+| ENG002 | Clear Responsibility | ES-001 |
+| ENG003 | Platform Manifest | ES-001 |
+
+> Estándares de engineering que establecen cómo se organiza y desarrolla la plataforma.
+
+## Índice — Engineering Handbook (`ADR-EHXX`)
+
+| ADR | Título | Documento |
+|-----|--------|-----------|
+| EH001 | Ecosystem First | EH-001 |
+| EH002 | Code Ownership | EH-001 |
+| EH003 | The Inteliar Method | EH-001 |
+
+> Principios de ingeniería que guían todas las decisiones técnicas.
 
 ---
 

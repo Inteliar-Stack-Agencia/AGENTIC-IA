@@ -30,6 +30,8 @@
 
 ## Índice
 
+### Services
+
 | AR | Servicio | Capa | Prioridad | ADRs |
 |----|----------|------|-----------|------|
 | [AR-001](./AR-001-Organization-Service.md) | Organization Service | Foundation | P0 | AR001 |
@@ -44,6 +46,14 @@
 | [AR-010](./AR-010-Builder-Engine.md) | Builder Engine | Build | P0 | AR023, AR024, AR025 |
 | [AR-011](./AR-011-AI-Runtime.md) | AI Runtime | Intelligence | P0 | AR026, AR027, AR028 |
 | [AR-012](./AR-012-Memory-Service.md) | Memory Service | Intelligence | P0 | AR029, AR030, AR031 |
+
+### Composition & Distribution
+
+| AR | Componente | Propósito | ADRs |
+|----|-----------|----------|------|
+| [AR-014](./AR-014-Capability-Catalog.md) | Capability Catalog | Catálogo oficial de Capabilities | AR035, AR036 |
+| [AR-015](./AR-015-Stack-Engine.md) | Stack Engine | Composición de productos | AR037, AR038, AR039 |
+| [AR-016](./AR-016-Stack-Studio.md) | Stack Studio | Entorno de diseño visual | AR040, AR041, AR042 |
 
 ## Orden de implementación recomendado
 
