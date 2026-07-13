@@ -16,9 +16,15 @@ Este volumen establece qué es Inteliar, cómo piensa y cómo se construye. Es e
 | 16 | [Engineering Principles](./16-Engineering-Principles.md) | ✅ | La constitución técnica |
 | 17 | [Open Platform Architecture](./17-Open-Platform-Architecture.md) | ✅ | Propiedad, Git Native, sin lock-in |
 | 18 | [Discover Engine](./18-Discover-Engine.md) | ✅ | La puerta de entrada: comprender antes de construir |
-| 19 | [Design Stage](./19-Design-Stage.md) | ✅ **nuevo** | Convertir comprensión en arquitectura ejecutable |
+| 19 | [Design Stage](./19-Design-Stage.md) | ✅ | Convertir comprensión en arquitectura ejecutable |
+| 19b | [The Inteliar Manifesto](./19b-The-Inteliar-Manifesto.md) | ✅ | Libro I — la cultura y filosofía (leer **primero**) |
+| 20 | [Organization System](./20-Organization-System.md) | ✅ | Libro II — la Organización como unidad principal |
 
+> **Numeración:** el Cap 19 (Design Stage, línea de ingeniería) y el Cap 19b (Manifesto, línea fundacional) comparten número por venir de dos hilos de escritura paralelos. El Manifesto es material de **Libro I** y debe leerse antes que todo lo técnico.
+>
 > Los capítulos 1–13 fueron redactados en una sesión previa y todavía no están en este repositorio. Ver *Pendientes* abajo.
+
+> **Track paralelo — Architecture Reference:** a partir de aquí el proyecto abrió un segundo hilo, el [Architecture Reference](../architecture/) (`AR-001`…`AR-012`), con especificaciones **implementables** de cada servicio. La Constitución dice *qué/por qué*; el AR dice *cómo se construye*.
 
 ---
 

@@ -48,12 +48,41 @@ El proyecto tiene tres autores en paralelo (capítulos, reconciliaciones, archit
 
 ## Índice — Architecture Reference (`ADR-ARXX`)
 
-| ADR | Título | Estado | Documento |
-|-----|--------|--------|-----------|
-| AR001 | Organization Service es el servicio raíz | Accepted | AR-001 |
-| AR002 | Identity nunca conoce permisos ni organizaciones | Accepted | AR-002 |
-| AR003 | Ningún servicio implementa permisos internamente | Accepted | AR-003 |
-| AR004 | Authorization as Data (las reglas son datos, no código) | Accepted | AR-003 |
+| ADR | Título | Documento |
+|-----|--------|-----------|
+| AR001 | Organization Service es el servicio raíz | AR-001 |
+| AR002 | Identity nunca conoce permisos ni organizaciones | AR-002 |
+| AR003 | Ningún servicio implementa permisos internamente | AR-003 |
+| AR004 | Authorization as Data (las reglas son datos, no código) | AR-003 |
+| AR005 | Todo cambio relevante genera un evento | AR-004 |
+| AR006 | Los servicios no se conocen entre sí (solo eventos) | AR-004 |
+| AR007 | Business Events son ciudadanos de primera clase | AR-004 |
+| AR008 | El Digital Twin es un modelo derivado, no transaccional | AR-005 |
+| AR009 | Todo agente consulta primero el Twin | AR-005 |
+| AR010 | Twin Dual Model (Operational + Strategic) | AR-005 |
+| AR011 | El Knowledge Engine nunca aprende directo del usuario | AR-006 |
+| AR012 | Todo conocimiento es versionado | AR-006 |
+| AR013 | Inteliar genera conocimiento, no solo lo almacena | AR-006 |
+| AR014 | The Architect nunca consulta una base de datos directa | AR-007 |
+| AR015 | The Architect no es un LLM, es razonamiento distribuido | AR-007 |
+| AR016 | One Organization, One Architect (persistente) | AR-007 |
+| AR017 | Todo proceso empresarial se ejecuta en Workflow Engine | AR-008 |
+| AR018 | Los Workflows son configuración, no programación | AR-008 |
+| AR019 | Goal-Oriented Workflows (Standard/Adaptive/Autonomous) | AR-008 |
+| AR020 | La Capability es la unidad mínima de negocio | AR-009 |
+| AR021 | No se aceptan funcionalidades huérfanas | AR-009 |
+| AR022 | Capabilities over Applications | AR-009 |
+| AR023 | Builder reutiliza antes de crear | AR-010 |
+| AR024 | El código pertenece al cliente, no a la herramienta | AR-010 |
+| AR025 | Builder es un Director de Orquesta (orquesta agentes) | AR-010 |
+| AR026 | Ningún servicio invoca directamente un modelo de IA | AR-011 |
+| AR027 | Los modelos son reemplazables; la inteligencia no | AR-011 |
+| AR028 | Cognitive Resource Management | AR-011 |
+| AR029 | Memory no es historial, es contexto estructurado | AR-012 |
+| AR030 | Toda memoria debe tener un propósito | AR-012 |
+| AR031 | Active Memory (memoria proactiva) | AR-012 |
+
+> Todos aceptados (`Accepted`). El texto completo de cada uno vive en su documento AR.
 
 ---
 

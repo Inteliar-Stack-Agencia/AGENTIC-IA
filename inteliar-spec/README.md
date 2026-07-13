@@ -12,13 +12,18 @@
 
 > La Tabla de Contenidos de abajo es el **plan completo** del IMS. Lo que ya está escrito y versionado en este repo es:
 
+El proyecto tiene **dos hilos** de documentación:
+
+1. **La Constitución** (`capitulos/`) — qué es Inteliar, cómo pensamos, cómo se diseña. Narrativo y fundacional.
+2. **El Architecture Reference** (`architecture/`) — cómo se implementa cada servicio. Especificaciones listas para construir.
+
 | Ubicación | Contenido |
 |-----------|-----------|
-| [`capitulos/`](./capitulos/) | **Volumen 1 — Foundation:** Caps 14–19 (Digital Twin, BOS, Engineering Principles, Open Platform, Discover, Design) |
-| [`capitulos/README.md`](./capitulos/README.md) | Índice del Volumen 1 y su arco |
-| [`adr/README.md`](./adr/README.md) | **ADR Ledger** — decisiones 015–027, incluidas las reconciliaciones ADR-026 y ADR-027 |
+| [`capitulos/`](./capitulos/) | **Constitución:** Caps 14–20 + 19b Manifesto (Digital Twin, BOS, Engineering, Open Platform, Discover, Design, Manifesto, Organization) |
+| [`architecture/`](./architecture/) | **Architecture Reference:** AR-001…AR-012 (Organization, Identity, Permission, Event Bus, Digital Twin, Knowledge, Architect, Workflow, Capability, Builder, AI Runtime, Memory) |
+| [`adr/README.md`](./adr/README.md) | **ADR Ledger** — 3 namespaces: `0XX` plataforma (015–027), `RXX` reconciliaciones (R01–R02), `ARXX` architecture (AR001–AR031) |
 
-Pendiente: traer los capítulos 1–13 (redactados en sesión previa) y hacer la pasada de coherencia pre-BOS. Ver pendientes en el índice del Volumen 1.
+Pendiente: traer los capítulos 1–13 (sesión previa) + pasada de coherencia pre-BOS; AR-013 Capability Blueprint y AR-014+ (Deploy, Cloud, Billing, Monitoring).
 
 ---
 
