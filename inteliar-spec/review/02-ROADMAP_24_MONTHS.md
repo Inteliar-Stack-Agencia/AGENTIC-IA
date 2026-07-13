@@ -5,25 +5,30 @@
 
 ---
 
-## Sprint -1 (esta semana, no dos semanas) — Contención
+## Sprint -1 (semanas 1-3) — "Earn the right to build Inteliar"
 
-**Esto no es parte del roadmap de Inteliar. Es una interrupción obligatoria antes de empezar cualquier otra cosa.**
+**Esto no es parte del roadmap de features de Inteliar. Es la condición previa para que exista un roadmap de features.**
 
-- **Objetivo:** cerrar las 6 vulnerabilidades activas en producción identificadas en la auditoría real.
-- **Riesgo si no se hace:** exposición de datos de clientes reales pagando, hoy.
+No construimos una sola feature de Inteliar en este sprint. Construimos confianza: que la organización puede operar 5 productos reales con la disciplina de ingeniería mínima que cualquier plataforma seria exige, antes de agregarles una capa más encima.
+
+- **Objetivo:** demostrar disciplina de ingeniería sobre los productos que ya existen, no diseñar los que vienen.
+- **Riesgo si no se hace:** todo lo que se construya después hereda la misma fragilidad — no tiene sentido poner un BOM Generator sobre bases que no tienen tests, secrets management ni observabilidad.
 - **Dependencias:** ninguna. No requiere ninguna decisión de arquitectura de Inteliar.
-- **Resultado esperado:**
-  1. Credencial de Supabase rotada y `LEGAL-TEMPLATES` saneado (historial limpio o repo recreado).
-  2. Ruta `/admin` de `RIWEB.APP` protegida por sesión real.
-  3. API key de Anthropic removida del cliente en `RIWEB.APP`, movida a server-side.
-  4. Contraseña admin por defecto eliminada en `whatsapp-agente`; sesión con HttpOnly/Secure/SameSite.
-  5. Token de webhook hardcodeado resuelto o decisión explícita de retirar `whatsapp-business-api`.
-  6. Escalada de privilegios en `VendexChat-admin` (CR-03) cerrada.
-- **Definition of Done:** las 6 issues cerradas con commit propio, sin excepción.
+- **Entregables:**
+  1. **Rotar todas las credenciales expuestas** — no solo la de `LEGAL-TEMPLATES`: auditar los 5 productos activos por cualquier secreto en el historial de Git.
+  2. **Corregir las vulnerabilidades activas** identificadas en `03-REPOSITORY_AUDIT.md §7`: `/admin` sin auth en `RIWEB.APP`, API key de Anthropic en el navegador, contraseña admin por defecto y sesión en texto plano en `whatsapp-agente`, token de webhook hardcodeado en `whatsapp-business-api`, JWT sin verificación de firma en Fixly, escalada de privilegios en `VendexChat-admin`.
+  3. **Secrets Management real** — todas las credenciales de los 5 productos activos salen de `.env` commiteables y pasan a un vault (Cloudflare/Supabase secrets o equivalente), con rotación documentada.
+  4. **CI/CD mínimo en los 5 productos activos** — hoy, según la auditoría, ninguno corre tests en CI (el que tiene CI solo hace build+deploy). Se agrega, como mínimo, lint + build bloqueante antes de cada deploy.
+  5. **Tests** — no cobertura completa, pero sí una primera suite de smoke tests en los flujos que mueven dinero (checkout, facturación, webhooks de pago) en Fixly, VendexChat e Inteliar Labels, que son los que ya facturan.
+  6. **Lint** consistente entre los 5 repos activos (hoy cada uno tiene su propia configuración o ninguna).
+  7. **Observabilidad y monitoreo mínimos** — logs estructurados y alertas básicas (errores 5xx, fallos de webhook de pago) en los 3 productos con clientes pagando.
+  8. **Backup verificado** — confirmar que las bases de Supabase de los 3 productos con clientes reales tienen backup automático activo y que se probó al menos una restauración.
+  9. **Documentar** lo que hoy solo vive en la cabeza del equipo: cómo desplegar, cómo rotar un secreto, a quién avisar si un webhook de pago falla — un `RUNBOOK.md` por producto activo.
+- **Definition of Done:** los 6 hallazgos de seguridad cerrados con commit propio, secrets management operando en los 5 productos activos, CI bloqueante corriendo, smoke tests de los flujos de dinero pasando, y un `RUNBOOK.md` por producto. Sin excepción — y sin empezar Sprint 0 antes de esto.
 
 ---
 
-## Sprint 0 (semanas 1-2) — Fundación mínima
+## Sprint 0 (semanas 4-5) — Fundación mínima
 
 - **Objetivo:** inicializar `inteliar-stack` con la estructura mínima que la Fase 1 realmente necesita, no la de ES-001 completa.
 - **Riesgo:** sobre-diseñar la estructura antes de tener código que la llene (el mismo error de `zeus-core`).
@@ -36,7 +41,7 @@
 
 ---
 
-## Sprint 1 (semanas 3-4) — Architect: la conversación, y nada más
+## Sprint 1 (semanas 6-7) — Architect: la conversación, y nada más
 
 - **Objetivo:** una sola pantalla. "Hola, soy Architect. Contame sobre tu empresa." Sin dashboard, sin login todavía (usar un magic link simple si hace falta persistencia).
 - **Riesgo:** la tentación de agregar Builder, Capabilities o Marketplace "ya que estamos". Resistir activamente.
@@ -46,7 +51,7 @@
 
 ---
 
-## Sprint 2 (semanas 5-6) — BOM Generator v0
+## Sprint 2 (semanas 8-9) — BOM Generator v0
 
 - **Objetivo:** la conversación produce un archivo BOM real, siguiendo `FOUNDATION-BOM-Specification.md`, simplificado a las secciones que ya importan hoy: Identity, Objectives, Capabilities (detectadas), Processes, Metrics.
 - **Riesgo:** intentar implementar las 14 secciones del BOM completo de una vez. No — solo 5.
@@ -56,7 +61,7 @@
 
 ---
 
-## Sprint 3 (semanas 7-8) — Reporte profesional
+## Sprint 3 (semanas 10-11) — Reporte profesional
 
 - **Objetivo:** generar un PDF/reporte a partir del BOM: diagnóstico + problemas detectados + 3 recomendaciones concretas.
 - **Riesgo:** que el reporte se sienta genérico. Mitigación: usar los procesos reales de Fixly/reparaciones como plantilla de referencia para el primer vertical (Workshop), no un vertical abstracto.
@@ -66,7 +71,7 @@
 
 ---
 
-## Sprint 4-5 (semanas 9-12) — Validación con empresas reales
+## Sprint 4-5 (semanas 12-15) — Validación con empresas reales
 
 - **Objetivo:** correr la conversación con 20 empresas reales (no internas). Mezcla sugerida: talleres, restaurantes, distribuidoras — dominios donde ya hay conocimiento de dominio real (Fixly, VendexChat).
 - **Riesgo:** que el "20 minutos de conversación" resulte ser más fricción que valor para un dueño de PyME no técnico — esta es la hipótesis central sin validar identificada en la revisión.
@@ -77,7 +82,7 @@
 
 ---
 
-## Sprint 6-7 (semanas 13-16) — Primera Capability real (extraída, no diseñada)
+## Sprint 6-7 (semanas 16-19) — Primera Capability real (extraída, no diseñada)
 
 - **Objetivo:** extraer `customer-management` como la primera Capability siguiendo AR-013 simplificado, a partir del esquema real de Fixly + VendexChat (no diseñada en el vacío — ver `01-PROPOSED_ARCHITECTURE.md §6`).
 - **Riesgo:** el mismo de siempre — diseñar de más antes de tener un segundo consumidor real.
@@ -87,7 +92,7 @@
 
 ---
 
-## Sprint 8-9 (semanas 17-20) — Segunda y tercera Capability
+## Sprint 8-9 (semanas 20-23) — Segunda y tercera Capability
 
 - **Objetivo:** `billing` (extraída de Inteliar Labels, la pieza más madura del portafolio) y `repair-management` (extraída de Fixly).
 - **Riesgo:** ninguno nuevo — mismo patrón que Sprint 6-7.
@@ -97,7 +102,7 @@
 
 ---
 
-## Sprint 10-12 (semanas 21-24) — Stack mínimo: Workshop Stack v0
+## Sprint 10-12 (semanas 24-27) — Stack mínimo: Workshop Stack v0
 
 - **Objetivo:** componer las 3 Capabilities en un Stack instalable real (`Workshop Stack`), reemplazando gradualmente al Fixly actual.
 - **Riesgo:** intentar migrar todos los clientes de Fixly de golpe. No — un cliente piloto primero.
@@ -155,7 +160,7 @@
 
 | | Roadmap original (documentos de visión) | Este roadmap |
 |---|---|---|
-| Primeros 6 meses | Identity, Permission, Workflow, Builder, Marketplace (o, en el pivot final, Architect→BOM→Stack) | Sprint -1 (seguridad) → Architect conversación → validación con 20 empresas reales → 3 Capabilities *extraídas* de código real |
+| Primeros 6 meses | Identity, Permission, Workflow, Builder, Marketplace (o, en el pivot final, Architect→BOM→Stack) | Sprint -1 ("Earn the right to build Inteliar": seguridad + secrets management + CI/CD + tests + observabilidad + backup + runbooks) → Architect conversación → validación con 20 empresas reales → 3 Capabilities *extraídas* de código real |
 | Cuándo aparece infraestructura pesada | Declarada desde el documento 1 como "stack común" | Solo cuando el volumen real la pida (evaluado explícitamente en mes 19-24) |
 | Cuándo aparece Marketplace/Stack Studio completo | Documentado en detalle antes del primer commit | Pospuesto a mes 13+ (Business Mode) y mes 19+ (evaluación de Studio Mode/Marketplace) |
 | Criterio de avance entre sprints | Ninguno explícito | Métrica de validación explícita en Sprint 4-5 que puede frenar todo el roadmap si falla |

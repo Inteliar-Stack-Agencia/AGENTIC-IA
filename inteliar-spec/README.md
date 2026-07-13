@@ -8,22 +8,28 @@
 
 ---
 
-## 📍 Estado actual del repositorio
+## 📍 Empezar por acá
 
-> La Tabla de Contenidos de abajo es el **plan completo** del IMS. Lo que ya está escrito y versionado en este repo es:
+> **[`FOUNDING_DECISIONS.md`](./FOUNDING_DECISIONS.md)** — léelo antes que cualquier otra cosa. Es una página: 10 principios innegociables + una lista de hipótesis con estado honesto (🟡 no validada / 🟠 en experimentación / 🟢 validada / 🔴 descartada). Regla de este proyecto: **cuando la realidad contradice la visión, gana la realidad** — este documento es el único que se actualiza en vez de acumularse.
 
-El proyecto tiene **dos hilos** de documentación:
+## Estado actual del repositorio
 
-1. **La Constitución** (`capitulos/`) — qué es Inteliar, cómo pensamos, cómo se diseña. Narrativo y fundacional.
-2. **El Architecture Reference** (`architecture/`) — cómo se implementa cada servicio. Especificaciones listas para construir.
+El proyecto tiene **tres hilos** de documentación:
+
+1. **La Constitución** (`capitulos/` + `architecture/` + `engineering/` + documentos raíz) — la visión completa, 65+ documentos, escrita antes de tocar código. Queda **congelada como `Inteliar v1 Vision`**.
+2. **La Revisión de Arquitectura** (`review/`) — auditoría independiente de esa visión cruzada con el estado real de los 17 repositorios de la organización. Empieza el `Inteliar Build Log`: de acá en adelante, todo documento nuevo responde "qué implementamos / qué aprendimos / qué cambiamos / qué validamos", no "qué se nos ocurrió".
+3. **`FOUNDING_DECISIONS.md`** — el resumen de una página de los dos anteriores. Se actualiza; no se reemplaza con documentos nuevos.
 
 | Ubicación | Contenido |
 |-----------|-----------|
+| [`FOUNDING_DECISIONS.md`](./FOUNDING_DECISIONS.md) | **Punto de entrada:** principios innegociables + hipótesis con estado |
+| [`review/`](./review/) | **Architecture Review:** auditoría, propuesta simplificada, roadmap de 24 meses, auditoría de repos reales, decisión final |
 | [`capitulos/`](./capitulos/) | **Constitución:** Caps 14–20 + 19b Manifesto (Digital Twin, BOS, Engineering, Open Platform, Discover, Design, Manifesto, Organization) |
-| [`architecture/`](./architecture/) | **Architecture Reference:** AR-001…AR-012 (Organization, Identity, Permission, Event Bus, Digital Twin, Knowledge, Architect, Workflow, Capability, Builder, AI Runtime, Memory) |
-| [`adr/README.md`](./adr/README.md) | **ADR Ledger** — 3 namespaces: `0XX` plataforma (015–027), `RXX` reconciliaciones (R01–R02), `ARXX` architecture (AR001–AR031) |
+| [`architecture/`](./architecture/) | **Architecture Reference:** AR-001…AR-016 (Foundation, Intelligence, Execution + Capability Catalog, Stack Engine, Stack Studio) |
+| [`engineering/`](./engineering/) | **Engineering Standards & Handbook:** ES-001 (monorepo), EH-001 (20 principios de ingeniería) |
+| [`adr/README.md`](./adr/README.md) | **ADR Ledger** — 4 namespaces: `0XX` plataforma, `RXX` reconciliaciones, `ARXX` architecture, `ENGXX`/`EHXX` engineering |
 
-Pendiente: traer los capítulos 1–13 (sesión previa) + pasada de coherencia pre-BOS; AR-013 Capability Blueprint y AR-014+ (Deploy, Cloud, Billing, Monitoring).
+Pendiente: traer los capítulos 1–13 (sesión previa) + pasada de coherencia pre-BOS; auditar los 5 repos de la cuenta `Oskelias` (ver `review/03-REPOSITORY_AUDIT.md`).
 
 ---
 
