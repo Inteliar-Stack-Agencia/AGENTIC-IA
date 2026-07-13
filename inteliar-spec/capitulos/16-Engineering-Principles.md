@@ -102,7 +102,7 @@ Todo el conocimiento versionado. No código.
 
 ### docs/
 Toda especificación vive aquí. Nunca en Notion, nunca en chats. **Git es la verdad.**
-> **Nota (ver ADR-026):** "Git es la verdad" se refiere a la verdad del *sistema* (código, esquema, docs). La verdad del *negocio* vive en el Digital Twin.
+> **Nota (ver ADR-R01):** "Git es la verdad" se refiere a la verdad del *sistema* (código, esquema, docs). La verdad del *negocio* vive en el Digital Twin.
 
 ---
 

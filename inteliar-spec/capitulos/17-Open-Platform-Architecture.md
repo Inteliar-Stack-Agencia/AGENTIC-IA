@@ -57,7 +57,7 @@ Inteliar nunca será el único lugar donde existe el proyecto. Siempre existirá
 Toda modificación termina en Git, no importa si proviene de Builder, Architect, Claude, Cursor, CLI, API o Partner.
 
 ```
-Git → Truth (del sistema — ver ADR-026)
+Git → Truth (del sistema — ver ADR-R01)
 ```
 
 ---
@@ -153,7 +153,7 @@ Inteliar nunca retendrá a un cliente mediante dependencia tecnológica. La perm
 ## 🚨 ADR-023 — Inteliar es Git Native
 Inteliar no inventará un sistema de versionado, ni un editor propietario, ni un formato propio de proyectos. Git ya resolvió ese problema. Construimos encima, no al costado.
 
-> **Complemento (ADR-027):** el Digital Twin y el Blueprint también viven en Git, en el repo del cliente, bajo `.inteliar/`.
+> **Complemento (ADR-R02):** el Digital Twin y el Blueprint también viven en Git, en el repo del cliente, bajo `.inteliar/`.
 
 ---
 

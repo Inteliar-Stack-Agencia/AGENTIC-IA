@@ -256,7 +256,7 @@ deployment:
       type: worker
   data:
     provider_recommendation: supabase
-    twin_location: repository                   # ver ADR-027
+    twin_location: repository                   # ver ADR-R02
 ```
 
 El cliente puede sobreescribir cualquier recomendación. Design nunca genera lock-in (ADR-022).

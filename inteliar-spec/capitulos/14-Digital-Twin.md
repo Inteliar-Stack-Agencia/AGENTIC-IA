@@ -217,7 +217,7 @@ Cuando una empresa gastronómica llega, no empieza desde cero. Parte desde un Tw
 Todo proyecto dentro de Inteliar debe poseer un Digital Twin. Sin Twin, no existe proyecto.
 
 ## 🚨 ADR-017 — El Digital Twin es la fuente de verdad del negocio
-> **Nota (ver ADR-026):** este ADR fue enmendado. El Twin es la fuente de verdad *del negocio*, no del sistema. La verdad del sistema (código, esquema) vive en Git.
+> **Nota (ver ADR-R01):** este ADR fue enmendado. El Twin es la fuente de verdad *del negocio*, no del sistema. La verdad del sistema (código, esquema) vive en Git.
 
 Queda establecido que:
 - Los módulos representan capacidades.
