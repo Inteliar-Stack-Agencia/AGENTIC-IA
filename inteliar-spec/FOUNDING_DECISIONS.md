@@ -96,6 +96,19 @@ Por cada hora escrita en arquitectura, una hora hablando con un negocio real. 1:
 
 Cada conversación real responde una sola pregunta sobre esta página: ¿confirmó un principio, o le pegó a una hipótesis? Si confirmó un principio, el principio se queda igual — ya estaba fuerte. Si contradijo una hipótesis, esta página se actualiza esa misma semana. Si pasa un mes sin que ninguna fila de la tabla de arriba cambie de estado, no es que todo esté validado — es que nadie salió a hablar con nadie.
 
+## Regla de Evidencia
+
+Con una entrevista no se detectan patrones. Se detecta ruido. Ningún componente de inteligencia colectiva (Business Graph, Knowledge Engine, detección automática de patrones) se implementa antes de tener el volumen que lo justifique.
+
+```
+Nivel 1 — Evidencia        (acá estamos)   guardar: entrevista, BOM, validación. Nada de IA.
+Nivel 2 — Organización     (20-40 casos)   clasificar por industria. Todavía sin IA.
+Nivel 3 — Descubrimiento   (evidencia real) recién ahí: ¿qué patrones se repiten?
+Nivel 4 — Knowledge Engine (datos reales)   automatizar lo que el Nivel 3 ya validó a mano.
+```
+
+Primero datos. Después hipótesis. Después automatización — nunca al revés.
+
 ---
 
 *FOUNDING_DECISIONS — el documento más corto y más importante de todo `inteliar-spec/`.*

@@ -23,7 +23,10 @@ Cada entrevista de esta carpeta es un intento de sumar una empresa a ese conteo 
 ```
 business-research/
 ├── INTERVIEW_TEMPLATE.md      ← copiar para cada entrevista nueva
-├── industries/
+├── case-studies/              ← negocios que el fundador ya conoce a fondo
+│                                  (ver case-studies/README.md — NO es lo mismo
+│                                   que industries/, no se mezclan en el conteo)
+├── industries/                ← entrevistas a desconocidos, primera impresión
 │   ├── talleres/       (celulares, autos, motos, computadoras, electrodomésticos)
 │   ├── gastronomia/    (restaurante, cafetería, viandas, delivery, food truck)
 │   ├── retail/         (librería, ferretería, indumentaria, electrónica, mayoristas/distribuidoras)
@@ -32,11 +35,13 @@ business-research/
 └── patterns/           ← vacío a propósito, ver patterns/README.md
 ```
 
-Cada carpeta de industria contiene una entrevista por archivo (`YYYY-MM-DD-nombre-empresa.md`), usando `INTERVIEW_TEMPLATE.md` como base. Ninguna carpeta tiene contenido todavía — son destinos, no ejemplos.
+Cada carpeta contiene una entrevista/case study por archivo (`YYYY-MM-DD-nombre-empresa.md`), usando `INTERVIEW_TEMPLATE.md` como base. Ninguna carpeta tiene contenido todavía — son destinos, no ejemplos.
 
-## Objetivo actual: 100 entrevistas
+## Punto de partida: 3 casos fundacionales + 100 entrevistas externas
 
-20 por cada una de las 5 categorías de arriba. No para vender — para aprender qué tienen en común, qué cambia según el tamaño, qué software usan, y qué Capabilities aparecen siempre. Ahí es donde nacen las primeras Capabilities oficiales — después de ver el patrón repetirse en entrevistas reales, no antes.
+Antes de salir a buscar desconocidos, los primeros 3 registros son negocios que el fundador ya conoce en profundidad — Mundo Electrónico (Repair), Morfi Viandas (Order/Production/Delivery), Punto Pickit (Logistics). Van en `case-studies/`, sirven como test de precisión (¿Architect pregunta bien? ¿el BOM es fiel a lo que el fundador ya sabe?), y **no cuentan** para la métrica de reconocimiento espontáneo.
+
+Después de eso, el objetivo es 100 entrevistas externas: 20 por cada una de las 5 categorías de `industries/`. No para vender — para aprender qué tienen en común, qué cambia según el tamaño, qué software usan, y qué Capabilities aparecen siempre. Ahí nacen las primeras Capabilities oficiales — después de ver el patrón repetirse en entrevistas reales e independientes, no antes.
 
 Si una categoría nueva aparece con fuerza (por ejemplo, ninguna de las 5 encaja bien), se agrega — pero recién cuando haya 2-3 entrevistas reales que no entren en ninguna, no antes de empezar.
 
