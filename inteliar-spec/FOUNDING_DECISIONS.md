@@ -73,6 +73,16 @@ Todo lo que sigue es una idea con potencial real, ya explorada en profundidad, p
 
 ---
 
+## El primer KPI
+
+No es técnico. No es MRR, usuarios, commits ni Capabilities.
+
+**¿Cuántas empresas entendimos correctamente?**
+
+Una empresa entendida correctamente es una donde el dueño, mirando el modelo que le devolvimos, dice sin que se lo pidamos: *"sí, así funciona mi negocio."* Eso se registra en [`business-research/`](../business-research/), no acá — este documento son las reglas; esa carpeta es la evidencia.
+
+---
+
 ## Cómo se usa este documento
 
 - Antes de escribir un documento nuevo de visión, se revisa si lo que se quiere decir ya es una hipótesis de esta lista. Si lo es, se actualiza su estado con evidencia nueva — no se crea un documento nuevo que la reformule con otro nombre.

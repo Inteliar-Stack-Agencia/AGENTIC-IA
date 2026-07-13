@@ -20,9 +20,12 @@ El proyecto tiene **tres hilos** de documentación:
 2. **La Revisión de Arquitectura** (`review/`) — auditoría independiente de esa visión cruzada con el estado real de los 17 repositorios de la organización. Empieza el `Inteliar Build Log`: de acá en adelante, todo documento nuevo responde "qué implementamos / qué aprendimos / qué cambiamos / qué validamos", no "qué se nos ocurrió".
 3. **`FOUNDING_DECISIONS.md`** — el resumen de una página de los dos anteriores. Se actualiza; no se reemplaza con documentos nuevos.
 
+Fuera de `inteliar-spec/`, en la raíz del repo, vive un cuarto elemento que no es documentación de arquitectura: **[`business-research/`](../business-research/)** — entrevistas reales con negocios, sin código y sin arquitectura. Es donde se mide el primer KPI del proyecto (ver `FOUNDING_DECISIONS.md § El primer KPI`) y donde la Regla del Fundador deja evidencia.
+
 | Ubicación | Contenido |
 |-----------|-----------|
-| [`FOUNDING_DECISIONS.md`](./FOUNDING_DECISIONS.md) | **Punto de entrada:** principios innegociables + hipótesis con estado |
+| [`FOUNDING_DECISIONS.md`](./FOUNDING_DECISIONS.md) | **Punto de entrada:** principios innegociables + hipótesis con estado + primer KPI |
+| [`../business-research/`](../business-research/) | **Evidencia real:** entrevistas por industria, sin código ni arquitectura |
 | [`review/`](./review/) | **Architecture Review:** auditoría, propuesta simplificada, roadmap de 24 meses, auditoría de repos reales, decisión final |
 | [`capitulos/`](./capitulos/) | **Constitución:** Caps 14–20 + 19b Manifesto (Digital Twin, BOS, Engineering, Open Platform, Discover, Design, Manifesto, Organization) |
 | [`architecture/`](./architecture/) | **Architecture Reference:** AR-001…AR-016 (Foundation, Intelligence, Execution + Capability Catalog, Stack Engine, Stack Studio) |
