@@ -8,6 +8,20 @@
 
 ---
 
+## 📍 Estado actual del repositorio
+
+> La Tabla de Contenidos de abajo es el **plan completo** del IMS. Lo que ya está escrito y versionado en este repo es:
+
+| Ubicación | Contenido |
+|-----------|-----------|
+| [`capitulos/`](./capitulos/) | **Volumen 1 — Foundation:** Caps 14–19 (Digital Twin, BOS, Engineering Principles, Open Platform, Discover, Design) |
+| [`capitulos/README.md`](./capitulos/README.md) | Índice del Volumen 1 y su arco |
+| [`adr/README.md`](./adr/README.md) | **ADR Ledger** — decisiones 015–027, incluidas las reconciliaciones ADR-026 y ADR-027 |
+
+Pendiente: traer los capítulos 1–13 (redactados en sesión previa) y hacer la pasada de coherencia pre-BOS. Ver pendientes en el índice del Volumen 1.
+
+---
+
 ## ¿Qué es este documento?
 
 Este no es un PRD. No es una estrategia de negocio. No es un roadmap.
