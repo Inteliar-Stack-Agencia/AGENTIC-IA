@@ -77,7 +77,14 @@ Todo lo que sigue es una idea con potencial real, ya explorada en profundidad, p
 
 - Antes de escribir un documento nuevo de visión, se revisa si lo que se quiere decir ya es una hipótesis de esta lista. Si lo es, se actualiza su estado con evidencia nueva — no se crea un documento nuevo que la reformule con otro nombre.
 - Ninguna hipótesis pasa a principio sin evidencia de uso real. Ninguna hipótesis se convierte en infraestructura de producción (un servicio, un datastore nuevo) mientras siga en 🟡.
+- Toda idea nueva — un documento, una hipótesis nueva, un pedido de construcción fuera del roadmap activo — pasa primero por [`PROPOSAL_TEMPLATE.md`](./PROPOSAL_TEMPLATE.md). Si no se puede completar en ocho respuestas, la idea no está lista.
 - Este documento es más corto que cualquier AR porque esa es la idea: lo que sobrevive de una conversación de horas cabe en una página. El resto son notas de investigación, no verdades.
+
+## Regla del Fundador
+
+Por cada hora escrita en arquitectura, una hora hablando con un negocio real. 1:1, no como aspiración — como límite. El activo más valioso de este proyecto no es ningún documento de esta carpeta: es la capacidad de entender negocios reales, y esa capacidad no se entrena leyendo ni escribiendo — se entrena en conversaciones que este documento no puede tener por vos.
+
+Cada conversación real responde una sola pregunta sobre esta página: ¿confirmó un principio, o le pegó a una hipótesis? Si confirmó un principio, el principio se queda igual — ya estaba fuerte. Si contradijo una hipótesis, esta página se actualiza esa misma semana. Si pasa un mes sin que ninguna fila de la tabla de arriba cambie de estado, no es que todo esté validado — es que nadie salió a hablar con nadie.
 
 ---
 
