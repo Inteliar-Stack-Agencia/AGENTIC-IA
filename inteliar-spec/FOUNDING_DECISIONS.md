@@ -98,16 +98,23 @@ Cada conversación real responde una sola pregunta sobre esta página: ¿confirm
 
 ## Regla de Evidencia
 
-Con una entrevista no se detectan patrones. Se detecta ruido. Ningún componente de inteligencia colectiva (Business Graph, Knowledge Engine, detección automática de patrones) se implementa antes de tener el volumen que lo justifique.
+Con una sesión no se detectan patrones. Se detecta ruido. Ningún componente de inteligencia colectiva (Business Graph, Knowledge Engine, detección automática de patrones) se implementa antes de tener el volumen que lo justifique.
 
 ```
-Nivel 1 — Evidencia        (acá estamos)   guardar: entrevista, BOM, validación. Nada de IA.
-Nivel 2 — Organización     (20-40 casos)   clasificar por industria. Todavía sin IA.
-Nivel 3 — Descubrimiento   (evidencia real) recién ahí: ¿qué patrones se repiten?
-Nivel 4 — Knowledge Engine (datos reales)   automatizar lo que el Nivel 3 ya validó a mano.
+Nivel 1 — Foundational Cases   (acá estamos)  El fundador prueba si Architect pregunta
+                                                bien contra negocios que ya conoce. Nada de IA.
+Nivel 2 — External Validation   (empieza ahora) Desconocidos, sin interés en el proyecto:
+                                                ¿reconocen su negocio espontáneamente? Sin IA.
+Nivel 3 — Industry Validation   (20-40 casos)  Recién con volumen real e independiente:
+                                                ¿qué patrones se repiten entre negocios?
+Nivel 4 — Predictive Validation (datos reales) Architect anticipa un problema antes de que
+                                                lo mencionen, y acierta. Requiere Nivel 3
+                                                ya validado a mano — no antes.
 ```
 
 Primero datos. Después hipótesis. Después automatización — nunca al revés.
+
+**Regla dura:** el conocimiento de un Foundational Case (Nivel 1) nunca pasa a ser "conocimiento reutilizable" de Architect solo por haber salido de ahí. Necesita confirmarse en Nivel 2 (una empresa externa, sin el sesgo de interés del fundador) antes de contar. Eso evita que Architect aprenda los sesgos del fundador disfrazados de patrones de industria. Ver `business-research/README.md` para el detalle completo de los 4 niveles.
 
 ---
 
