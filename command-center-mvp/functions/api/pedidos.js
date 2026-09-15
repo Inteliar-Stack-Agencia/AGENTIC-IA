@@ -27,7 +27,10 @@ export async function onRequestGet(context) {
       headers: { "Content-Type": "application/json" },
     });
 
-  if (!env.AGENT_API_KEY) {
+  // .trim() porque el valor se pega a mano en el dashboard y un espacio o salto de
+  // línea al final da un 401 idéntico al de una clave equivocada.
+  const agentKey = (env.AGENT_API_KEY || "").trim();
+  if (!agentKey) {
     return json({ error: "Falta configurar AGENT_API_KEY en Cloudflare Pages." }, 500);
   }
 
@@ -49,7 +52,7 @@ export async function onRequestGet(context) {
   let res;
   try {
     res = await fetch(`${EDGE_FUNCTION_URL}?${params.toString()}`, {
-      headers: { "x-agent-key": env.AGENT_API_KEY },
+      headers: { "x-agent-key": agentKey },
     });
   } catch (err) {
     return json({ error: `No se pudo conectar con la herramienta: ${err.message}` }, 502);
