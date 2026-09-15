@@ -1,7 +1,7 @@
-// app.js — estado central, ruteo Núcleo → empleado, y la única integración real
-// de esta etapa: PEDIDOS ejecutando get-company-orders. Todo lo demás es simulado
-// a propósito (ver plan). tools.js expone STORES y TOOLS; templates.js expone
-// las funciones render*.
+// app.js — estado central, ruteo Núcleo → empleado, y la única integración real:
+// PEDIDOS ejecutando get-company-orders. Nada se simula: los empleados sin
+// herramienta conectada lo dicen y no hacen nada. tools.js expone STORES y TOOLS;
+// templates.js expone las funciones render*.
 
 const STATUS_META = {
   trabajando: { label: "Trabajando", color: "#ec3013", ring: 1, anim: true },
@@ -25,28 +25,22 @@ function nowLabel() {
   return new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-// ── Estado de los 9 empleados ───────────────────────────────────────
-// PEDIDOS es la única capacidad real de esta etapa. CAJA queda reservado
-// para facturación/finanzas a futuro (no se le asigna PEDIDOS ni ninguna
-// otra herramienta todavía). Los otros 7 son mocks visuales, igual que en
-// el prototipo original.
+// ── Estado ──────────────────────────────────────────────────────────
+// Nada de lo que se ve acá está inventado. No hay tareas de ejemplo, ni
+// aprobaciones pendientes de mentira, ni actividad simulada: todo lo que
+// aparezca en pantalla salió de una ejecución real.
+//
+// PEDIDOS es la única capacidad real. Los otros 8 son puestos previstos sin
+// herramienta conectada — se muestran para saber qué falta, pero no simulan
+// trabajo: si se les despacha una tarea, lo dicen y no hacen nada.
 const state = {
   screen: "mando",
   hoveredAgent: null,
   draftText: "",
   chat: [],
   feed: [],
-  approvals: [
-    {
-      id: "ap1", agent: "MARKETING", cliente: "Morfi Viandas CABA",
-      texto: "Aprobar copy de campaña de fin de semana antes de publicar en Instagram.",
-      regla: "Requiere aprobación humana: contenido público", time: nowLabel(),
-    },
-  ],
-  scheduled: [
-    { day: 0, time: "09:00", title: "Seguimiento a leads fríos", agent: "VENTAS" },
-    { day: 2, time: "14:00", title: "Publicar aviso de búsqueda", agent: "RRHH" },
-  ],
+  approvals: [],
+  scheduled: [],
   hireForm: { role: "Cobranzas", client: "", perms: ["leer"], autonomy: "supervisado" },
   // La clave del agente ya no vive acá: la usa el server en functions/api/pedidos.js.
   config: {
@@ -54,14 +48,14 @@ const state = {
   },
   agents: [
     { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
-    { code: "CAJA", nombre: "Caja", rol: "Reservado — futuras capacidades de facturación y finanzas", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "SOPORTE", nombre: "Soporte", rol: "Atención por WhatsApp y resolución de consultas", cliente: "Gaucho Natural Pet", status: "trabajando", progress: 62, tarea: "Respondiendo consultas de stock", paso: "Redactando respuesta 4/7", tools: ["whatsapp-api (mock)"], real: false, log: [], lastResult: null },
-    { code: "MARKETING", nombre: "Marketing", rol: "Campañas y contenido en redes", cliente: "Morfi Viandas CABA", status: "aprobacion", progress: 100, tarea: "Campaña de fin de semana", paso: "Esperando aprobación de copy", tools: ["meta-ads (mock)"], real: false, log: [], lastResult: null },
-    { code: "VENTAS", nombre: "Ventas", rol: "Seguimiento comercial y cotizaciones", cliente: "Morfi La Plata", status: "programado", progress: 0, tarea: "Enviar seguimiento a leads fríos", paso: "Programado para mañana 09:00", tools: ["crm (mock)"], real: false, log: [], lastResult: null },
-    { code: "RRHH", nombre: "RRHH", rol: "Reclutamiento y onboarding", cliente: "Inteliar Stack", status: "pausado", progress: 35, tarea: "Búsqueda de repartidor CABA", paso: "Pausado por el usuario", tools: ["ats (mock)"], real: false, log: [], lastResult: null },
-    { code: "LEGAL", nombre: "Legal", rol: "Contratos y compliance", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["docs (mock)"], real: false, log: [], lastResult: null },
-    { code: "DATOS", nombre: "Datos", rol: "Analítica e informes internos", cliente: "Morfi Empresas", status: "trabajando", progress: 28, tarea: "Armando informe semanal de ventas", paso: "Cruzando datos de Cierre de Stock", tools: ["sql (mock)"], real: false, log: [], lastResult: null },
-    { code: "OPS", nombre: "Ops", rol: "Operaciones y logística de despacho", cliente: "Morfi Viandas CABA", status: "error", progress: 0, tarea: "Sincronizar rutas de reparto", paso: "Error: token de mapa vencido", tools: ["maps-api (mock)"], real: false, log: [], lastResult: null },
+    { code: "CAJA", nombre: "Caja", rol: "Facturación y finanzas — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "SOPORTE", nombre: "Soporte", rol: "Atención por WhatsApp — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "MARKETING", nombre: "Marketing", rol: "Campañas y contenido — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "VENTAS", nombre: "Ventas", rol: "Seguimiento comercial — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "RRHH", nombre: "RRHH", rol: "Reclutamiento y onboarding — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "LEGAL", nombre: "Legal", rol: "Contratos y compliance — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "DATOS", nombre: "Datos", rol: "Analítica e informes — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "OPS", nombre: "Ops", rol: "Operaciones y logística — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
   ],
 };
 
@@ -148,7 +142,19 @@ function buildPedidosResult(data, companyName) {
     }
   }
   const totalGeneral = rows.reduce((s, r) => s + (r.subtotal || 0), 0);
-  return { companyName: data.company_name || companyName, count: data.count || 0, rows, totalGeneral };
+
+  // El monto por estado se informa aparte: un pedido `pending` no es plata
+  // cobrada, y sumarlo junto con los completados da un número que parece
+  // facturación y no lo es.
+  const porEstado = {};
+  for (const o of data.orders || []) {
+    const estado = o.status || "sin estado";
+    if (!porEstado[estado]) porEstado[estado] = { pedidos: 0, monto: 0 };
+    porEstado[estado].pedidos += 1;
+    porEstado[estado].monto += (o.items || []).reduce((s, it) => s + (it.subtotal || 0), 0);
+  }
+
+  return { companyName: data.company_name || companyName, count: data.count || 0, rows, totalGeneral, porEstado };
 }
 
 async function runPedidosTask(agent, text) {
@@ -173,7 +179,10 @@ async function runPedidosTask(agent, text) {
     agent.paso = `Completado — ${result.count} pedido(s)`;
     pushLog(agent, `${result.count} pedido(s) encontrados para "${result.companyName}". Total ${money(result.totalGeneral)}.`);
     pushFeed(agent, `Encontró ${result.count} pedido(s) de ${result.companyName} (${money(result.totalGeneral)}).`, "ok");
-    addChat("PEDIDOS", `Encontré ${result.count} pedido(s) de ${result.companyName}${from ? " desde " + from : ""}. Total: ${money(result.totalGeneral)}. Podés ver el detalle y descargar el Excel en su ficha.`);
+    const desglose = Object.entries(result.porEstado)
+      .map(([estado, v]) => `${v.pedidos} ${estado} (${money(v.monto)})`)
+      .join(", ");
+    addChat("PEDIDOS", `Encontré ${result.count} pedido(s) de ${result.companyName}${from ? " desde " + from : ""} en ${storeName(state.config.storeId)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
     showToast("PEDIDOS completó la tarea", `${result.count} pedidos de ${result.companyName}`);
     setTimeout(() => {
       if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
@@ -185,70 +194,6 @@ async function runPedidosTask(agent, text) {
     pushFeed(agent, `Error consultando pedidos: ${err.message}`, "error");
     addChat("PEDIDOS", `Hubo un error real consultando la herramienta: ${err.message}`);
   }
-}
-
-// ── Tareas mock (los otros 7 empleados, y CAJA sin herramienta) ─────
-function runMockTask(agent, text) {
-  agent.status = "trabajando";
-  agent.progress = 5;
-  agent.tarea = text.length > 70 ? text.slice(0, 70) + "…" : text;
-  agent.paso = "Procesando (simulado)...";
-  pushLog(agent, `Tomó la tarea: "${text}".`);
-  addChat(agent.code, `Tomé la tarea. Este empleado todavía no tiene una herramienta real conectada — esto es una simulación de comportamiento, no una acción de verdad.`);
-
-  setTimeout(() => {
-    agent.progress = 100;
-    agent.status = "completado";
-    agent.paso = "Completado (simulado)";
-    pushLog(agent, "Tarea completada (simulada).");
-    pushFeed(agent, `Completó (simulado): ${agent.tarea}`, "ok");
-    render();
-    setTimeout(() => {
-      if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
-    }, 5000);
-  }, 3500);
-}
-
-async function handleDispatch(text) {
-  text = text.trim();
-  if (!text) return;
-  addChat("Vos", text);
-  state.draftText = "";
-
-  const code = routeTask(text);
-  if (!code) {
-    addChat("NÚCLEO", 'No identifiqué a qué empleado corresponde. Probá mencionar "pedidos", "campaña", "soporte", "informe", etc.');
-    render();
-    return;
-  }
-
-  const agent = getAgent(code);
-  if (code === "CAJA") {
-    addChat("CAJA", "Todavía no tengo ninguna herramienta real asignada en esta etapa — quedo reservado para futuras capacidades de facturación y finanzas.");
-    render();
-    return;
-  }
-
-  render();
-  if (agent.real) {
-    await runPedidosTask(agent, text);
-  } else {
-    runMockTask(agent, text);
-  }
-  render();
-}
-
-function storeName(id) {
-  const s = STORES.find(x => x.id === id);
-  return s ? s.nombre : "—";
-}
-
-// PEDIDOS consulta la tienda que esté elegida en el selector, no una fija. Si el
-// cliente que muestra la ficha no se sincroniza, el panel puede decir una tienda
-// mientras la consulta sale contra otra — y los numeros parecerian de quien no son.
-function syncRealAgentClient() {
-  const pedidos = getAgent("PEDIDOS");
-  if (pedidos) pedidos.cliente = storeName(state.config.storeId);
 }
 
 // ── Layout orbital (posiciona los 9 nodos alrededor del núcleo) ─────
@@ -475,21 +420,10 @@ document.getElementById("app").addEventListener("change", (e) => {
   if (e.target.id === "hireRole") { state.hireForm.role = e.target.value; render(); }
 });
 
-// Reloj + pequeño "aliento" del núcleo para que las tareas en curso se sientan vivas
 setInterval(() => {
   const clock = document.getElementById("clock");
   if (clock) clock.textContent = nowLabel();
-  if (state.screen === "mando" && !selectedAgentCode) {
-    let changed = false;
-    state.agents.forEach(a => {
-      if (a.status === "trabajando" && a.progress < 95 && a.code !== "PEDIDOS") {
-        a.progress = Math.min(95, a.progress + Math.floor(Math.random() * 6));
-        changed = true;
-      }
-    });
-    if (changed) render();
-  }
-}, 4000);
+}, 1000);
 
 // Rotación lenta de la órbita (~6 minutos por vuelta). Solo reposiciona los
 // nodos, no re-renderiza: si rearmara el HTML perdería el foco del input de

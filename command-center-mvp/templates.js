@@ -222,7 +222,10 @@ function renderResultBox(r) {
     <div class="result-title">Último resultado real — ${escapeHtml(r.companyName)}</div>
     <div class="result-row"><span>Pedidos encontrados</span><span>${r.count}</span></div>
     <div class="result-row"><span>Líneas de producto</span><span>${r.rows.length}</span></div>
-    <div class="result-row"><span>Total</span><span>${money(r.totalGeneral)}</span></div>
+    ${Object.entries(r.porEstado || {}).map(([estado, v]) => `
+      <div class="result-row"><span>· ${escapeHtml(estado)}</span><span>${v.pedidos} · ${money(v.monto)}</span></div>
+    `).join("")}
+    <div class="result-row"><span>Total (todos los estados)</span><span>${money(r.totalGeneral)}</span></div>
     <div class="result-actions">
       <button class="btn-ghost" data-action="download-excel">Descargar Excel</button>
     </div>
