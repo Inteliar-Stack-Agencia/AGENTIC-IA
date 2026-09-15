@@ -1,8 +1,7 @@
 # Command Center — MVP
 
-Prototipo del centro de mando de Inteliar Stack: un núcleo orquestador, 9 empleados
-digitales orbitando por estado, despacho de tareas en texto libre, aprobaciones,
-actividad y programadas.
+Prototipo del centro de mando de Inteliar Stack: un núcleo orquestador, cinco
+empleados digitales orbitando por estado, y despacho de tareas en lenguaje natural.
 
 HTML/CSS/JS plano, sin build ni framework. Se abre con doble click en `index.html`
 para desarrollo, y en producción lo sirve Cloudflare Pages tal cual.
@@ -44,6 +43,7 @@ hostname, sin importar el path.
 |---|---|
 | `AGENTES_USER` / `AGENTES_PASS` | Usuario y contraseña del panel. Los define quien administra el panel. |
 | `AGENT_API_KEY` | El secreto que ya existía en Supabase (`AGENT_API_KEY` del proyecto `pjrhfbhqdbyoljactdkj`). Tiene que coincidir exacto o la Edge Function devuelve 401. |
+| `ANTHROPIC_API_KEY` | Para el intérprete de lenguaje natural. Sin esto el panel no entiende nada de lo que se le escribe. |
 
 Pages enlaza las variables **en el momento del deploy**: si se agrega o cambia un
 secreto, hay que redesplegar (o pushear) para que las Functions lo vean.
@@ -92,7 +92,24 @@ command-center-mvp/
 ├── app.js                      # estado, ruteo de pantallas, layout orbital, tareas
 ├── templates.js                # funciones puras de render (HTML string)
 ├── tools.js                    # única capa de conexión a herramientas reales
-└── functions/                  # Cloudflare Pages Functions (corren en el server)
-    ├── _middleware.js          # Basic Auth para todo el sitio
-    └── api/pedidos.js          # proxy a get-company-orders
+├── functions/                  # Cloudflare Pages Functions (corren en el server)
+│   ├── _middleware.js          # Basic Auth para todo el sitio
+│   └── api/
+│       ├── interpretar.js      # lenguaje natural → consulta estructurada
+│       ├── pedidos.js          # proxy a get-company-orders
+│       ├── despachos.js        # proxy a get-company-dispatches
+│       ├── facturacion.js      # proxy a get-company-invoices
+│       ├── gastos.js           # proxy a get-expenses
+│       └── clientes.js         # proxy a get-company-clients
+└── docs/
+    ├── ENVIRONMENT.md          # qué existe, qué se puede tocar, qué trampas tienen los datos
+    ├── FEATURE_MAP.md          # cómo se conectan las piezas
+    ├── PROCESS.md              # el primer proceso autónomo: facturación de despachos
+    └── PERMISSIONS.md          # los 4 niveles de acción
 ```
+
+## El siguiente paso
+
+Las cinco capacidades son de **solo lectura**: el ciclo real hoy es observar e
+informar. El primer proceso que ejecuta y verifica —facturación de despachos
+entregados— está diseñado en `docs/PROCESS.md` y todavía no implementado.
