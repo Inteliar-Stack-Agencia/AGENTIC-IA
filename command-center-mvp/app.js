@@ -53,7 +53,7 @@ const state = {
     storeId: localStorage.getItem("cc_store_id") || STORES[0].id,
   },
   agents: [
-    { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: "Morfi Viandas CABA", status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
+    { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
     { code: "CAJA", nombre: "Caja", rol: "Reservado — futuras capacidades de facturación y finanzas", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
     { code: "SOPORTE", nombre: "Soporte", rol: "Atención por WhatsApp y resolución de consultas", cliente: "Gaucho Natural Pet", status: "trabajando", progress: 62, tarea: "Respondiendo consultas de stock", paso: "Redactando respuesta 4/7", tools: ["whatsapp-api (mock)"], real: false, log: [], lastResult: null },
     { code: "MARKETING", nombre: "Marketing", rol: "Campañas y contenido en redes", cliente: "Morfi Viandas CABA", status: "aprobacion", progress: 100, tarea: "Campaña de fin de semana", paso: "Esperando aprobación de copy", tools: ["meta-ads (mock)"], real: false, log: [], lastResult: null },
@@ -238,6 +238,19 @@ async function handleDispatch(text) {
   render();
 }
 
+function storeName(id) {
+  const s = STORES.find(x => x.id === id);
+  return s ? s.nombre : "—";
+}
+
+// PEDIDOS consulta la tienda que esté elegida en el selector, no una fija. Si el
+// cliente que muestra la ficha no se sincroniza, el panel puede decir una tienda
+// mientras la consulta sale contra otra — y los numeros parecerian de quien no son.
+function syncRealAgentClient() {
+  const pedidos = getAgent("PEDIDOS");
+  if (pedidos) pedidos.cliente = storeName(state.config.storeId);
+}
+
 // ── Layout orbital (posiciona los 9 nodos alrededor del núcleo) ─────
 // NODE_HALF_W/H son el medio ancho y alto que ocupa un nodo (avatar + etiqueta):
 // el radio máximo se calcula restándolos para que ningún nodo quede cortado por
@@ -363,6 +376,7 @@ function downloadExcel(agent) {
 let selectedAgentCode = null;
 
 function render() {
+  syncRealAgentClient();
   document.getElementById("screenTitle").textContent = selectedAgentCode
     ? getAgent(selectedAgentCode).nombre.toUpperCase()
     : SCREENS.find(s => s.id === state.screen).label.toUpperCase();
@@ -457,7 +471,7 @@ document.getElementById("app").addEventListener("input", (e) => {
   if (e.target.id === "hireClient") state.hireForm.client = e.target.value;
 });
 document.getElementById("app").addEventListener("change", (e) => {
-  if (e.target.id === "cfgStore") { state.config.storeId = e.target.value; localStorage.setItem("cc_store_id", e.target.value); }
+  if (e.target.id === "cfgStore") { state.config.storeId = e.target.value; localStorage.setItem("cc_store_id", e.target.value); render(); }
   if (e.target.id === "hireRole") { state.hireForm.role = e.target.value; render(); }
 });
 
