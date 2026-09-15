@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inteliar Stack — Command Center (MVP)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <nav id="side-nav">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div class="brand-text">INTELIAR STACK</div>
+      </div>
+      <div class="brand-sub">Digital Employee OS · MVP</div>
+      <div class="nav-items" id="navItems"></div>
+      <div class="nav-foot">
+        <div class="nav-foot-title">Carga de plataforma</div>
+        <div class="nav-foot-row"><span>Empresas</span><span id="statEmpresas">1</span></div>
+        <div class="nav-foot-row"><span>Empleados</span><span id="statAgentes">9</span></div>
+        <div class="nav-foot-row"><span>Capacidades reales</span><span>1 / 9</span></div>
+      </div>
+    </nav>
+
+    <div id="main-col">
+      <header id="top-header">
+        <div class="screen-title" id="screenTitle">CENTRO DE MANDO</div>
+        <div class="header-divider"></div>
+        <div class="screen-sub" id="screenSub">Vista general</div>
+        <div class="header-right">
+          <div class="orquestador-pill"><span class="pulse-dot"></span>Orquestador activo</div>
+          <div class="clock" id="clock">00:00:00</div>
+        </div>
+      </header>
+
+      <main id="screen-mount"></main>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast" hidden>
+    <div class="toast-bar"></div>
+    <div class="toast-body">
+      <div class="toast-text" id="toastText"></div>
+      <div class="toast-sub" id="toastSub"></div>
+    </div>
+  </div>
+
+  <script src="templates.js"></script>
+  <script src="tools.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
