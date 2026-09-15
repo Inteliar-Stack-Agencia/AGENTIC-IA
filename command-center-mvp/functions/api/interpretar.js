@@ -52,8 +52,8 @@ const HERRAMIENTAS = [
   },
   {
     nombre: "clientes",
-    descripcion: "Empresas cliente y sus precios acordados. Sin empresa, las lista todas.",
-    disponible: false,
+    descripcion: "Empresas cliente registradas y sus precios acordados. Sin empresa, las lista todas.",
+    disponible: true,
     obligatorios: [],
     opcionales: ["empresa"],
   },

@@ -217,6 +217,7 @@ function renderPedidosConfig(STORES) {
 }
 
 function renderResultBox(r) {
+  if (r.tipo === "clientes") return renderClientesBox(r);
   return `
   <div class="result-box">
     <div class="result-title">Último resultado real — ${escapeHtml(r.companyName)}</div>
@@ -229,6 +230,22 @@ function renderResultBox(r) {
     <div class="result-actions">
       <button class="btn-ghost" data-action="download-excel">Descargar Excel</button>
     </div>
+  </div>`;
+}
+
+// El resultado de CLIENTES no tiene montos ni Excel: es un catálogo, no una
+// consulta de operaciones, así que se muestra distinto al de PEDIDOS.
+function renderClientesBox(r) {
+  return `
+  <div class="result-box">
+    <div class="result-title">Último resultado real — empresas cliente</div>
+    <div class="result-row"><span>Mostradas</span><span>${r.clients.length} de ${r.total} registradas</span></div>
+    ${r.clients.map(c => `
+      <div class="result-row">
+        <span>${escapeHtml(c.name)}${c.is_active ? "" : " (inactiva)"}</span>
+        <span>${c.prices_count ? `${c.prices_count} precios` : "sin precios"}${c.discount_percentage ? ` · ${c.discount_percentage}% desc.` : ""}</span>
+      </div>
+    `).join("")}
   </div>`;
 }
 

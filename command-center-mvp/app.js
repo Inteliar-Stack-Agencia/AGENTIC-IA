@@ -59,7 +59,7 @@ const state = {
     { code: "DESPACHOS", nombre: "Despachos", rol: "Qué se despachó a cada empresa y cuándo", datos: "company_dispatches · 240 filas, última el 13/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-dispatches", real: false, log: [], lastResult: null },
     { code: "FACTURACION", nombre: "Facturación", rol: "Facturas emitidas por empresa y período", datos: "company_invoices · 30 filas, última el 07/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-invoices", real: false, log: [], lastResult: null },
     { code: "GASTOS", nombre: "Gastos", rol: "Gastos y proveedores por período", datos: "expenses · 88 filas · suppliers · 8", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-expenses", real: false, log: [], lastResult: null },
-    { code: "CLIENTES", nombre: "Clientes", rol: "Empresas cliente y sus precios acordados", datos: "company_clients · 11 · company_client_prices · 29", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-clients", real: false, log: [], lastResult: null },
+    { code: "CLIENTES", nombre: "Clientes", rol: "Empresas cliente registradas y sus precios acordados", datos: "company_clients · company_client_prices", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-clients"], pendiente: null, real: true, log: [], lastResult: null },
   ],
 };
 
@@ -157,6 +157,49 @@ async function runPedidosTask(agent, consulta) {
   }
 }
 
+// ── CLIENTES → get-company-clients ───────────────────────────────────
+async function runClientesTask(agent, consulta) {
+  agent.status = "trabajando";
+  agent.progress = 20;
+  agent.tarea = consulta.empresa ? `Buscando a ${consulta.empresa}` : "Listando empresas cliente";
+  agent.paso = "Llamando a get-company-clients...";
+  pushLog(agent, `Consultando get-company-clients${consulta.empresa ? ` (empresa: "${consulta.empresa}")` : ""}.`);
+  render();
+
+  try {
+    const data = await TOOLS.clientes.call({ storeId: state.config.storeId });
+    const todos = data.clients || [];
+    // El filtro por empresa se hace acá y no en la Edge Function: el catálogo de
+    // una tienda son decenas de filas, traerlo entero y filtrar es más simple que
+    // sumarle un parámetro de búsqueda difusa a la función.
+    const clients = consulta.empresa
+      ? todos.filter(c => c.name.toLowerCase().includes(consulta.empresa.toLowerCase()))
+      : todos;
+
+    agent.progress = 100;
+    agent.status = "completado";
+    agent.lastResult = { tipo: "clientes", clients, total: todos.length };
+    agent.paso = `Completado — ${clients.length} empresa(s)`;
+    pushLog(agent, `${clients.length} empresa(s) de ${todos.length} registradas.`);
+    pushFeed(agent, `Listó ${clients.length} empresa(s) cliente.`, "ok");
+
+    addChat("CLIENTES", clients.length === 0
+      ? `No encontré empresas que coincidan con "${consulta.empresa}" en ${storeName(state.config.storeId)}. Hay ${todos.length} registradas.`
+      : `${clients.length} empresa(s) en ${storeName(state.config.storeId)}: ${clients.map(c => `${c.name}${c.prices_count ? ` (${c.prices_count} precios pactados)` : " (sin precios pactados)"}`).join(", ")}.`);
+
+    showToast("CLIENTES completó la tarea", `${clients.length} empresa(s)`);
+    setTimeout(() => {
+      if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
+    }, 7000);
+  } catch (err) {
+    agent.status = "error";
+    agent.paso = `Error: ${err.message}`;
+    pushLog(agent, `Error: ${err.message}`);
+    pushFeed(agent, `Error consultando clientes: ${err.message}`, "error");
+    addChat("CLIENTES", `Hubo un error real consultando la herramienta: ${err.message}`);
+  }
+}
+
 function storeName(id) {
   const s = STORES.find(x => x.id === id);
   return s ? s.nombre : "—";
@@ -220,7 +263,7 @@ async function handleDispatch(text) {
     return;
   }
 
-  if (!consulta.empresa) {
+  if (code === "PEDIDOS" && !consulta.empresa) {
     addChat(code, "Entendí que querés consultar pedidos, pero no identifiqué de qué empresa. Decime el nombre y lo busco.");
     render();
     return;
@@ -239,11 +282,12 @@ async function handleDispatch(text) {
   // emparejamiento difuso puede devolver un subconjunto de los pedidos sin que
   // nada lo indique. Se avisa: un resultado incompleto que parece completo es
   // peor que un error.
-  if (consulta.catalogo === false) {
+  if (consulta.catalogo === false && consulta.empresa) {
     addChat(code, `Ojo: no pude verificar "${consulta.empresa}" contra la lista de empresas registradas, así que busco por el texto tal cual. Si está mal escrito, pueden faltar pedidos en el resultado.`);
   }
 
-  await runPedidosTask(agent, consulta);
+  const TAREAS = { PEDIDOS: runPedidosTask, CLIENTES: runClientesTask };
+  await TAREAS[code](agent, consulta);
   render();
 }
 
@@ -342,7 +386,9 @@ function layoutOrbits() {
 // ── Excel (mismo formato que empleado-digital-mvp) ───────────────────
 function downloadExcel(agent) {
   const r = agent.lastResult;
-  if (!r || !r.rows.length) return;
+  // El catálogo de CLIENTES no tiene filas de pedido: su caja de resultado no
+  // muestra el botón, pero el guard evita romper si se llega por otro camino.
+  if (!r || !r.rows?.length) return;
   const wb = XLSX.utils.book_new();
   const detalle = [
     ["Pedido", "Empleado", "Empresa", "Fecha", "Estado", "Producto", "Cantidad", "Precio unit.", "Subtotal"],
