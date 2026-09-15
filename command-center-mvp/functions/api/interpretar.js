@@ -32,21 +32,21 @@ const HERRAMIENTAS = [
   {
     nombre: "despachos",
     descripcion: "Qué se despachó a cada empresa y cuándo.",
-    disponible: false,
+    disponible: true,
     obligatorios: [],
     opcionales: ["empresa", "desde", "hasta"],
   },
   {
     nombre: "facturacion",
     descripcion: "Facturas emitidas por empresa y período.",
-    disponible: false,
+    disponible: true,
     obligatorios: [],
     opcionales: ["empresa", "desde", "hasta"],
   },
   {
     nombre: "gastos",
     descripcion: "Gastos y proveedores por período. Sin proveedor, devuelve todos.",
-    disponible: false,
+    disponible: true,
     obligatorios: [],
     opcionales: ["proveedor", "desde", "hasta"],
   },
@@ -76,11 +76,22 @@ async function traerCatalogo(storeId, agentKey) {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const nombres = (data.clients || []).map(c => c.name).filter(Boolean);
-    return nombres.length ? nombres : null;
+    const clientes = (data.clients || [])
+      .filter(c => c.name)
+      .map(c => ({ id: c.id, name: c.name }));
+    return clientes.length ? clientes : null;
   } catch {
     return null;
   }
+}
+
+// El modelo resuelve el texto del usuario a un nombre del catálogo; el id lo
+// busca el código, no el modelo. Despachos, facturación y gastos filtran por
+// client_id exacto, y un id inventado devolvería datos de otra empresa o ninguno.
+function resolverId(empresa, catalogo) {
+  if (!empresa || !catalogo) return null;
+  const buscado = empresa.trim().toLowerCase();
+  return catalogo.find(c => c.name.trim().toLowerCase() === buscado)?.id ?? null;
 }
 
 function systemPrompt(hoy, catalogo) {
@@ -104,7 +115,7 @@ Si el rango viene invertido (desde posterior a hasta), dalo vuelta y anotalo en 
 
 ${catalogo
   ? `Empresas cliente registradas en esta tienda:
-${catalogo.map(n => `- ${n}`).join("\n")}
+${catalogo.map(c => `- ${c.name}`).join("\n")}
 
 Resolvé el nombre que dijo el usuario contra esa lista y devolvé en "empresa" el nombre tal como figura ahí, aunque lo haya escrito mal, incompleto o con otra grafía. Si lo corregiste, anotalo en "ajustes" (por ejemplo: 'busqué "Argentina Valores", entendí que te referías a eso cuando escribiste "argentina balores"').
 
@@ -183,5 +194,10 @@ export async function onRequestPost(context) {
     return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo) }, 200);
   }
 
-  return json({ ...consulta, disponible: true, catalogo: Boolean(catalogo) }, 200);
+  return json({
+    ...consulta,
+    empresa_id: resolverId(consulta.empresa, catalogo),
+    disponible: true,
+    catalogo: Boolean(catalogo),
+  }, 200);
 }

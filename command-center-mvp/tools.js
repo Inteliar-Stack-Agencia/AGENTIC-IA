@@ -36,6 +36,40 @@ const TOOLS = {
     },
   },
 
+  // Las tres consultas por período comparten forma: misma tienda, mismo rango de
+  // fechas, mismo manejo de error. Se generan desde una fábrica para que agregar
+  // la próxima sea una línea y no otra copia del mismo bloque.
+  ...Object.fromEntries(
+    [
+      ["despachos", "/api/despachos", "get-company-dispatches"],
+      ["facturacion", "/api/facturacion", "get-company-invoices"],
+      ["gastos", "/api/gastos", "get-expenses"],
+    ].map(([nombre, ruta, key]) => [nombre, {
+      key,
+      async call({ storeId, clientId, desde, hasta, extra }) {
+        if (!storeId) throw new Error("Falta elegir la tienda.");
+
+        const params = new URLSearchParams({ store_id: storeId });
+        if (clientId) params.set("client_id", clientId);
+        if (desde) params.set("from", desde);
+        if (hasta) params.set("to", hasta);
+        for (const [k, v] of Object.entries(extra || {})) {
+          if (v != null && v !== "") params.set(k, String(v));
+        }
+
+        const res = await fetch(`${ruta}?${params.toString()}`);
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error(`Respuesta inválida del servidor (HTTP ${res.status}).`);
+        }
+        if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+        return data;
+      },
+    }]),
+  ),
+
   clientes: {
     key: "get-company-clients",
     async call({ storeId, incluirInactivas }) {

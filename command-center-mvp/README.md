@@ -9,15 +9,23 @@ para desarrollo, y en producción lo sirve Cloudflare Pages tal cual.
 
 ## Qué es real y qué no
 
-| Empleado | Estado | Herramienta |
-|---|---|---|
-| PEDIDOS | **Real** | `get-company-orders` (Edge Function de Supabase, proyecto `pjrhfbhqdbyoljactdkj`) |
-| CAJA | Reservado | ninguna todavía — facturación/finanzas a futuro |
-| SOPORTE, MARKETING, VENTAS, RRHH, LEGAL, DATOS, OPS | Mock visual | simulación en `runMockTask()` |
+Los 5 puestos salieron de un relevamiento de la base: son las únicas áreas con datos
+reales detrás. Los 5 están conectados a una Edge Function del proyecto
+`pjrhfbhqdbyoljactdkj`, todas de solo lectura.
 
-`1 / 9 capacidades reales` es el número que muestra la barra lateral, y es literal.
-No se marca un empleado como real hasta que tenga una herramienta que devuelva datos
-de verdad.
+| Empleado | Herramienta | Datos |
+|---|---|---|
+| PEDIDOS | `get-company-orders` | `orders` + `order_items` |
+| DESPACHOS | `get-company-dispatches` | `company_dispatches` + items |
+| FACTURACIÓN | `get-company-invoices` | `company_invoices` |
+| GASTOS | `get-expenses` | `expenses` + `suppliers` |
+| CLIENTES | `get-company-clients` | `company_clients` + precios |
+
+MARKETING, RRHH, LEGAL y SOPORTE se eliminaron: no hay ninguna tabla que los
+respalde, así que no había forma de volverlos reales, solo simularlos.
+
+No se marca un empleado como real hasta que su herramienta devuelva datos de verdad,
+y un puesto sin herramienta no simula trabajo: si se le despacha una tarea, lo dice.
 
 ## Deploy
 

@@ -1,8 +1,6 @@
-// app.js — estado central, ruteo del Núcleo vía intérprete, y la única
-// integración de datos real:
-// PEDIDOS ejecutando get-company-orders. Nada se simula: los empleados sin
-// herramienta conectada lo dicen y no hacen nada. tools.js expone STORES y TOOLS;
-// templates.js expone las funciones render*.
+// app.js — estado central, ruteo del Núcleo vía intérprete y ejecución de las
+// tareas. Nada se simula: cada número en pantalla salió de una consulta real.
+// tools.js expone STORES y TOOLS; templates.js expone las funciones render*.
 
 const STATUS_META = {
   trabajando: { label: "Trabajando", color: "#ec3013", ring: 1, anim: true },
@@ -31,9 +29,8 @@ function nowLabel() {
 // aprobaciones pendientes de mentira, ni actividad simulada: todo lo que
 // aparezca en pantalla salió de una ejecución real.
 //
-// PEDIDOS es la única capacidad real. Los otros son puestos previstos sin
-// herramienta conectada — se muestran para saber qué falta, pero no simulan
-// trabajo: si se les despacha una tarea, lo dicen y no hacen nada.
+// Un puesto sin herramienta conectada no simula trabajo: si se le despacha una
+// tarea, lo dice y no hace nada.
 const state = {
   screen: "mando",
   hoveredAgent: null,
@@ -52,13 +49,14 @@ const state = {
   // tienen ninguna tabla que los respalde (bot_feedback y bot_pending_actions
   // están vacías) — no se pueden volver reales, solo simular.
   //
-  // `pendiente` nombra la Edge Function que falta construir para ese puesto. No es
-  // una aspiración vaga: es el próximo trabajo concreto, contra datos que existen.
+  // Los cinco tienen hoy su Edge Function desplegada. `pendiente` queda para el
+  // próximo puesto que se agregue: nombra la función que le falta, para que el
+  // panel diga qué trabajo concreto hay por delante en vez de fingir capacidad.
   agents: [
     { code: "PEDIDOS", nombre: "Pedidos", rol: "Pedidos por empresa, persona y fecha", datos: "orders · 197 filas", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], pendiente: null, real: true, log: [], lastResult: null },
-    { code: "DESPACHOS", nombre: "Despachos", rol: "Qué se despachó a cada empresa y cuándo", datos: "company_dispatches · 240 filas, última el 13/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-dispatches", real: false, log: [], lastResult: null },
-    { code: "FACTURACION", nombre: "Facturación", rol: "Facturas emitidas por empresa y período", datos: "company_invoices · 30 filas, última el 07/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-invoices", real: false, log: [], lastResult: null },
-    { code: "GASTOS", nombre: "Gastos", rol: "Gastos y proveedores por período", datos: "expenses · 88 filas · suppliers · 8", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-expenses", real: false, log: [], lastResult: null },
+    { code: "DESPACHOS", nombre: "Despachos", rol: "Qué se despachó a cada empresa y cuándo", datos: "company_dispatches · company_dispatch_items", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-dispatches"], pendiente: null, real: true, log: [], lastResult: null },
+    { code: "FACTURACION", nombre: "Facturación", rol: "Facturas emitidas, cobradas y pendientes", datos: "company_invoices", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-invoices"], pendiente: null, real: true, log: [], lastResult: null },
+    { code: "GASTOS", nombre: "Gastos", rol: "Gastos por período, categoría y proveedor", datos: "expenses · suppliers", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-expenses"], pendiente: null, real: true, log: [], lastResult: null },
     { code: "CLIENTES", nombre: "Clientes", rol: "Empresas cliente registradas y sus precios acordados", datos: "company_clients · company_client_prices", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-clients"], pendiente: null, real: true, log: [], lastResult: null },
   ],
 };
@@ -89,7 +87,7 @@ function showToast(text, sub) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 4500);
 }
 
-// ── La única tarea real: PEDIDOS → get-company-orders ────────────────
+// ── PEDIDOS → get-company-orders ─────────────────────────────────────
 function buildPedidosResult(data, companyName) {
   const rows = [];
   for (const o of data.orders || []) {
@@ -154,6 +152,86 @@ async function runPedidosTask(agent, consulta) {
     pushLog(agent, `Error: ${err.message}`);
     pushFeed(agent, `Error consultando pedidos: ${err.message}`, "error");
     addChat("PEDIDOS", `Hubo un error real consultando la herramienta: ${err.message}`);
+  }
+}
+
+// ── DESPACHOS / FACTURACIÓN / GASTOS ─────────────────────────────────
+// Las tres devuelven una lista más totales ya calculados del lado del server.
+// Cada una declara cómo resumir su resultado en una frase; el resto del flujo
+// (estados del agente, log, feed, manejo de error) es idéntico y vive una vez.
+const CONSULTAS_POR_PERIODO = {
+  DESPACHOS: {
+    tool: "despachos",
+    lista: d => d.dispatches,
+    resumen: d => {
+      const base = `${d.count} despacho(s) por ${money(d.total)}`;
+      return d.total_sin_facturar > 0
+        ? `${base}, de los cuales ${money(d.total_sin_facturar)} todavía no se facturaron`
+        : `${base}, todos facturados`;
+    },
+  },
+  FACTURACION: {
+    tool: "facturacion",
+    lista: d => d.invoices,
+    resumen: d => `${d.count} factura(s) por ${money(d.total_facturado)}. Cobrado: ${money(d.total_cobrado)}. Pendiente de cobro: ${money(d.pendiente_de_cobro)}`,
+  },
+  GASTOS: {
+    tool: "gastos",
+    lista: d => d.expenses,
+    resumen: d => {
+      const top = Object.entries(d.por_categoria || {})
+        .sort((a, b) => b[1].monto - a[1].monto)
+        .slice(0, 3)
+        .map(([cat, v]) => `${cat} ${money(v.monto)}`)
+        .join(", ");
+      return `${d.count} gasto(s) por ${money(d.total)}${top ? `. Principales rubros: ${top}` : ""}`;
+    },
+  },
+};
+
+async function runConsultaPorPeriodo(agent, consulta) {
+  const cfg = CONSULTAS_POR_PERIODO[agent.code];
+  agent.status = "trabajando";
+  agent.progress = 20;
+  agent.tarea = consulta.empresa ? `${agent.nombre} de ${consulta.empresa}` : `${agent.nombre} — ${describirRango(consulta.desde, consulta.hasta)}`;
+  agent.paso = `Llamando a ${agent.tools[0]}...`;
+  pushLog(agent, `Consultando ${agent.tools[0]} (${describirRango(consulta.desde, consulta.hasta)}${consulta.empresa ? `, empresa: "${consulta.empresa}"` : ""}).`);
+  render();
+
+  try {
+    const data = await TOOLS[cfg.tool].call({
+      storeId: state.config.storeId,
+      clientId: consulta.empresa_id || null,
+      desde: consulta.desde || null,
+      hasta: consulta.hasta || null,
+    });
+
+    agent.progress = 100;
+    agent.status = "completado";
+    agent.lastResult = { tipo: "periodo", resumen: cfg.resumen(data), filas: cfg.lista(data) || [] };
+    agent.paso = `Completado — ${data.count} resultado(s)`;
+    pushLog(agent, cfg.resumen(data));
+    pushFeed(agent, cfg.resumen(data), "ok");
+
+    // Si el usuario nombró una empresa que no está en el catálogo, no hay id y la
+    // consulta sale sin filtrar: el total sería de toda la tienda y parecería de
+    // esa empresa. Se avisa en vez de devolver un número atribuido a quien no es.
+    const sinFiltro = consulta.empresa && !consulta.empresa_id;
+    addChat(agent.code, [
+      `${cfg.resumen(data)} en ${storeName(state.config.storeId)}, ${describirRango(consulta.desde, consulta.hasta)}.`,
+      sinFiltro ? `Ojo: "${consulta.empresa}" no figura entre las empresas registradas, así que esto es de toda la tienda, no solo de esa empresa.` : "",
+    ].filter(Boolean).join(" "));
+
+    showToast(`${agent.code} completó la tarea`, `${data.count} resultado(s)`);
+    setTimeout(() => {
+      if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
+    }, 7000);
+  } catch (err) {
+    agent.status = "error";
+    agent.paso = `Error: ${err.message}`;
+    pushLog(agent, `Error: ${err.message}`);
+    pushFeed(agent, `Error: ${err.message}`, "error");
+    addChat(agent.code, `Hubo un error real consultando la herramienta: ${err.message}`);
   }
 }
 
@@ -286,7 +364,13 @@ async function handleDispatch(text) {
     addChat(code, `Ojo: no pude verificar "${consulta.empresa}" contra la lista de empresas registradas, así que busco por el texto tal cual. Si está mal escrito, pueden faltar pedidos en el resultado.`);
   }
 
-  const TAREAS = { PEDIDOS: runPedidosTask, CLIENTES: runClientesTask };
+  const TAREAS = {
+    PEDIDOS: runPedidosTask,
+    CLIENTES: runClientesTask,
+    DESPACHOS: runConsultaPorPeriodo,
+    FACTURACION: runConsultaPorPeriodo,
+    GASTOS: runConsultaPorPeriodo,
+  };
   await TAREAS[code](agent, consulta);
   render();
 }

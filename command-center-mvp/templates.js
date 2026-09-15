@@ -218,6 +218,7 @@ function renderPedidosConfig(STORES) {
 
 function renderResultBox(r) {
   if (r.tipo === "clientes") return renderClientesBox(r);
+  if (r.tipo === "periodo") return renderPeriodoBox(r);
   return `
   <div class="result-box">
     <div class="result-title">Último resultado real — ${escapeHtml(r.companyName)}</div>
@@ -230,6 +231,25 @@ function renderResultBox(r) {
     <div class="result-actions">
       <button class="btn-ghost" data-action="download-excel">Descargar Excel</button>
     </div>
+  </div>`;
+}
+
+// Despachos, facturación y gastos comparten forma: un resumen ya calculado del
+// lado del server más las filas. Se muestran las primeras y se aclara cuántas
+// quedaron afuera, en vez de volcar cientos de filas en la ficha.
+function renderPeriodoBox(r) {
+  const MAX = 12;
+  const visibles = r.filas.slice(0, MAX);
+  const campos = f => [f.date, f.client_name || f.supplier_name || f.description, f.total ?? f.amount];
+  return `
+  <div class="result-box">
+    <div class="result-title">Último resultado real</div>
+    <div class="result-row"><span>Resumen</span><span>${escapeHtml(r.resumen)}</span></div>
+    ${visibles.map(f => {
+      const [fecha, quien, monto] = campos(f);
+      return `<div class="result-row"><span>${escapeHtml(fecha || "")} · ${escapeHtml(quien || "—")}</span><span>${monto != null ? money(monto) : ""}</span></div>`;
+    }).join("")}
+    ${r.filas.length > MAX ? `<div class="result-row"><span>…</span><span>${r.filas.length - MAX} fila(s) más</span></div>` : ""}
   </div>`;
 }
 
