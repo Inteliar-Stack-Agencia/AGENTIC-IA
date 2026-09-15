@@ -1,0 +1,21 @@
+name = "inteliarstack-router"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── Variables de entorno ─────────────────────────────────────────────────────
+[vars]
+# Reemplazar por la URL real del proyecto de Cloudflare Pages que sirve
+# command-center-mvp/ (ver README.md de esta carpeta para el setup).
+AGENTES_ORIGIN = "https://inteliar-agentes.pages.dev"
+
+# ─── Rutas ───────────────────────────────────────────────────────────────────
+# La ruta se agrega en el Cloudflare Dashboard (Workers & Pages → este Worker
+# → Triggers → Add route), NO acá, porque inteliarstack.com ya es una zona
+# existente que no administra este repo.
+#
+# Ruta a agregar: inteliarstack.com/*  (zone: inteliarstack.com)
+#
+# Tiene que ser el patrón completo (/*), no solo /agentes/*, porque el Worker
+# necesita ver también las requests que NO son /agentes para poder hacer
+# pass-through (fetch(request)) hacia el origin real (Vercel).
