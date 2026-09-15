@@ -45,7 +45,14 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
 
-    if (url.pathname === AGENTES_PREFIX || url.pathname.startsWith(`${AGENTES_PREFIX}/`)) {
+    // command-center-mvp/ referencia sus assets con paths relativos (style.css,
+    // no /style.css) — sin la barra final, el navegador resuelve esas rutas
+    // relativas contra /, no contra /agentes/, y la página carga sin CSS ni JS.
+    if (url.pathname === AGENTES_PREFIX) {
+      return Response.redirect(`${url.origin}${AGENTES_PREFIX}/${url.search}`, 301)
+    }
+
+    if (url.pathname.startsWith(`${AGENTES_PREFIX}/`)) {
       const remaining = url.pathname.slice(AGENTES_PREFIX.length) || '/'
       const base = env.AGENTES_ORIGIN.replace(/\/$/, '')
       const targetUrl = `${base}${remaining}${url.search}`
