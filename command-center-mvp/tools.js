@@ -19,11 +19,11 @@ const TOOLS = {
   // Ver functions/api/interpretar.js.
   interpretar: {
     key: "interpretar",
-    async call({ texto }) {
+    async call({ texto, storeId }) {
       const res = await fetch("/api/interpretar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto }),
+        body: JSON.stringify({ texto, storeId }),
       });
       let data;
       try {

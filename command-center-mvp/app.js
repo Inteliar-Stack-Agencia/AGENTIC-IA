@@ -199,7 +199,7 @@ async function handleDispatch(text) {
 
   let consulta;
   try {
-    consulta = await TOOLS.interpretar.call({ texto: text });
+    consulta = await TOOLS.interpretar.call({ texto: text, storeId: state.config.storeId });
   } catch (err) {
     addChat("NÚCLEO", `No pude interpretar el pedido: ${err.message}`);
     render();
@@ -233,6 +233,14 @@ async function handleDispatch(text) {
     addChat(code, `Ajusté lo que pediste: ${consulta.ajustes.join("; ")}.`);
   } else if (consulta.confianza === "baja") {
     addChat(code, `Interpreté: ${consulta.interpretacion}. Si no es lo que pediste, reformulalo.`);
+  }
+
+  // Sin catálogo, el nombre de la empresa va tal cual se escribió y el
+  // emparejamiento difuso puede devolver un subconjunto de los pedidos sin que
+  // nada lo indique. Se avisa: un resultado incompleto que parece completo es
+  // peor que un error.
+  if (consulta.catalogo === false) {
+    addChat(code, `Ojo: no pude verificar "${consulta.empresa}" contra la lista de empresas registradas, así que busco por el texto tal cual. Si está mal escrito, pueden faltar pedidos en el resultado.`);
   }
 
   await runPedidosTask(agent, consulta);

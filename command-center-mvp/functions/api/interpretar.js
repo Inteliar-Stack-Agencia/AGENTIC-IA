@@ -59,7 +59,31 @@ const HERRAMIENTAS = [
   },
 ];
 
-function systemPrompt(hoy) {
+const CLIENTES_URL = "https://pjrhfbhqdbyoljactdkj.supabase.co/functions/v1/get-company-clients";
+
+// Trae el catálogo real de empresas de la tienda. Sin esto el modelo adivina el
+// nombre: "argentina balores" devuelve los pedidos cargados como "Argentina
+// Valores" pero pierde los que dicen "AVSA", y el resultado parece correcto.
+//
+// Si el catálogo no está disponible (la Edge Function todavía no desplegada, o
+// falla), se devuelve null y se interpreta igual — pero el llamador avisa que el
+// nombre no se pudo verificar. Seguir en silencio sería volver al mismo error.
+async function traerCatalogo(storeId, agentKey) {
+  if (!storeId || !agentKey) return null;
+  try {
+    const res = await fetch(`${CLIENTES_URL}?store_id=${encodeURIComponent(storeId)}`, {
+      headers: { "x-agent-key": agentKey },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const nombres = (data.clients || []).map(c => c.name).filter(Boolean);
+    return nombres.length ? nombres : null;
+  } catch {
+    return null;
+  }
+}
+
+function systemPrompt(hoy, catalogo) {
   return `Sos el ruteador de un panel de operaciones. Convertís un pedido en lenguaje natural en una consulta estructurada.
 
 Hoy es ${hoy} (zona horaria de Argentina).
@@ -78,7 +102,14 @@ Reglas de fechas: resolvé expresiones relativas contra la fecha de hoy. "la sem
 
 Si el rango viene invertido (desde posterior a hasta), dalo vuelta y anotalo en "ajustes". Todo arreglo que hagas sobre lo que el usuario pidió va en "ajustes": el operador tiene que poder ver qué cambiaste. Si no cambiaste nada, devolvé una lista vacía.
 
-Nunca corrijas ni completes el nombre de una empresa: copiá lo que dijo el usuario. El emparejamiento difuso lo hace la herramienta.
+${catalogo
+  ? `Empresas cliente registradas en esta tienda:
+${catalogo.map(n => `- ${n}`).join("\n")}
+
+Resolvé el nombre que dijo el usuario contra esa lista y devolvé en "empresa" el nombre tal como figura ahí, aunque lo haya escrito mal, incompleto o con otra grafía. Si lo corregiste, anotalo en "ajustes" (por ejemplo: 'busqué "Argentina Valores", entendí que te referías a eso cuando escribiste "argentina balores"').
+
+Si lo que escribió no se parece a ninguna de la lista, devolvé el texto tal cual y anotá en "ajustes" que esa empresa no figura entre las registradas. No la fuerces contra la más parecida si la diferencia es grande: es preferible que no aparezca a que traiga los datos de otra empresa.`
+  : `No hay catálogo de empresas disponible en este momento, así que copiá el nombre tal como lo dijo el usuario, sin corregirlo. El emparejamiento difuso lo hace la herramienta.`}
 
 "interpretacion" la lee una persona que opera el panel, no un programador: escribila en una frase corta y concreta. Nunca describas tu propio funcionamiento, ni menciones "herramientas", "parámetros" ni "consultas estructuradas". Si algo no se puede responder, decí qué datos harían falta, en términos del negocio.`;
 }
@@ -92,9 +123,9 @@ export async function onRequestPost(context) {
   const apiKey = (env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) return json({ error: "Falta configurar ANTHROPIC_API_KEY en Cloudflare Pages." }, 500);
 
-  let texto;
+  let texto, storeId;
   try {
-    ({ texto } = await request.json());
+    ({ texto, storeId } = await request.json());
   } catch {
     return json({ error: "Body inválido." }, 400);
   }
@@ -102,6 +133,7 @@ export async function onRequestPost(context) {
   if (texto.length > 1000) return json({ error: "El texto es demasiado largo." }, 400);
 
   const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" });
+  const catalogo = await traerCatalogo(storeId, (env.AGENT_API_KEY || "").trim());
 
   let res;
   try {
@@ -115,7 +147,7 @@ export async function onRequestPost(context) {
       body: JSON.stringify({
         model: MODELOS.interpretar,
         max_tokens: 400,
-        system: systemPrompt(hoy),
+        system: systemPrompt(hoy, catalogo),
         messages: [{ role: "user", content: texto }],
       }),
     });
@@ -148,8 +180,8 @@ export async function onRequestPost(context) {
     return json({ error: `El modelo pidió una herramienta que no existe: ${consulta.herramienta}` }, 502);
   }
   if (herramienta && !herramienta.disponible) {
-    return json({ ...consulta, disponible: false }, 200);
+    return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo) }, 200);
   }
 
-  return json({ ...consulta, disponible: true }, 200);
+  return json({ ...consulta, disponible: true, catalogo: Boolean(catalogo) }, 200);
 }
