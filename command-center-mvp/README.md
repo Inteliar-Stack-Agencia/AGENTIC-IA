@@ -1,0 +1,90 @@
+# Command Center — MVP
+
+Prototipo del centro de mando de Inteliar Stack: un núcleo orquestador, 9 empleados
+digitales orbitando por estado, despacho de tareas en texto libre, aprobaciones,
+actividad y programadas.
+
+HTML/CSS/JS plano, sin build ni framework. Se abre con doble click en `index.html`
+para desarrollo, y en producción lo sirve Cloudflare Pages tal cual.
+
+## Qué es real y qué no
+
+| Empleado | Estado | Herramienta |
+|---|---|---|
+| PEDIDOS | **Real** | `get-company-orders` (Edge Function de Supabase, proyecto `pjrhfbhqdbyoljactdkj`) |
+| CAJA | Reservado | ninguna todavía — facturación/finanzas a futuro |
+| SOPORTE, MARKETING, VENTAS, RRHH, LEGAL, DATOS, OPS | Mock visual | simulación en `runMockTask()` |
+
+`1 / 9 capacidades reales` es el número que muestra la barra lateral, y es literal.
+No se marca un empleado como real hasta que tenga una herramienta que devuelva datos
+de verdad.
+
+## Deploy
+
+- **Proyecto:** Cloudflare Pages `command-center-mvp` (conectado a este repo, rama `main`)
+- **Directorio raíz:** `command-center-mvp` · **Build command:** ninguno · **Output:** `/`
+- **Dominio:** `agentes.inteliarstack.com`
+
+`inteliarstack.com` (la raíz) es otro proyecto distinto (`inteliarstack-web`) y no se
+toca. Se usó un subdominio y no la subruta `/agentes` porque un dominio personalizado
+de Cloudflare tiene prioridad sobre cualquier Worker route externo para todo el
+hostname, sin importar el path.
+
+### Secretos (Cloudflare Pages → Configuración → Variables y secretos, entorno Producción)
+
+| Nombre | Qué es |
+|---|---|
+| `AGENTES_USER` / `AGENTES_PASS` | Usuario y contraseña del panel. Los define quien administra el panel. |
+| `AGENT_API_KEY` | El secreto que ya existía en Supabase (`AGENT_API_KEY` del proyecto `pjrhfbhqdbyoljactdkj`). Tiene que coincidir exacto o la Edge Function devuelve 401. |
+
+Pages enlaza las variables **en el momento del deploy**: si se agrega o cambia un
+secreto, hay que redesplegar (o pushear) para que las Functions lo vean.
+
+## Arquitectura de las herramientas reales
+
+Cada capacidad real es una Edge Function de Supabase, solo-lectura, autenticada con un
+secreto compartido (`x-agent-key`) y no con sesión de usuario — un agente externo no
+tiene login de Supabase. Adentro, la función usa la Service Role Key y hace el scoping
+por tienda a mano en la query, sin depender de RLS.
+
+Del lado del Command Center hay **una sola capa de conexión**, `tools.js`. Ningún
+empleado sabe hacer `fetch` por su cuenta:
+
+```js
+TOOLS.pedidos.call({ storeId, companyName, from, to })
+```
+
+Agregar una capacidad nueva (facturación, despachos, lo que sea) es: una entrada nueva
+en `TOOLS`, su Pages Function en `functions/api/`, y marcarle `real: true` + su lista
+de `tools` al empleado. El router, el render y el resto del sistema no se tocan.
+
+### Por qué el llamado sale del server y no del navegador
+
+`functions/api/pedidos.js` es un proxy: el browser llama a `/api/pedidos` (mismo
+origen) y el server de Cloudflare llama a la Edge Function. Dos razones, las dos
+bloqueantes si el navegador llamara directo:
+
+1. **CORS.** `get-company-orders` solo acepta `admin.vendexchat.app`,
+   `vendexchat.app` y `localhost:5173`. Desde `agentes.inteliarstack.com` el preflight
+   falla (el header `x-agent-key` es custom, siempre lo dispara) y el GET real nunca
+   sale.
+2. **El alcance de la clave.** `x-agent-key` lee los pedidos de *todas* las tiendas,
+   no solo la seleccionada. En el navegador quedaba en `localStorage`, legible por
+   cualquiera con la pantalla abierta.
+
+El `_middleware.js` de Basic Auth corre antes que cualquier Function, así que
+`/api/*` queda detrás del mismo login que el panel.
+
+## Estructura
+
+```
+command-center-mvp/
+├── index.html                  # markup base: nav, header, mount de pantalla, toast
+├── style.css                   # todo el estilo
+├── app.js                      # estado, ruteo de pantallas, layout orbital, tareas
+├── templates.js                # funciones puras de render (HTML string)
+├── tools.js                    # única capa de conexión a herramientas reales
+└── functions/                  # Cloudflare Pages Functions (corren en el server)
+    ├── _middleware.js          # Basic Auth para todo el sitio
+    └── api/pedidos.js          # proxy a get-company-orders
+```
