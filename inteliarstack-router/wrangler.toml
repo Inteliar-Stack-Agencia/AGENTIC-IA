@@ -5,9 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
 [vars]
-# Reemplazar por la URL real del proyecto de Cloudflare Pages que sirve
-# command-center-mvp/ (ver README.md de esta carpeta para el setup).
-AGENTES_ORIGIN = "https://inteliar-agentes.pages.dev"
+AGENTES_ORIGIN = "https://command-center-mvp.pages.dev"
 
 # ─── Rutas ───────────────────────────────────────────────────────────────────
 # La ruta se agrega en el Cloudflare Dashboard (Workers & Pages → este Worker
