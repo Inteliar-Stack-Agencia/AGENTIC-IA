@@ -212,8 +212,7 @@ function renderPedidosConfig(STORES) {
     <select id="cfgStore" data-action="set-store">
       ${STORES.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)}</option>`).join("")}
     </select>
-    <span class="lbl">x-agent-key</span>
-    <input id="cfgAgentKey" type="password" placeholder="Pegá la clave del agente" data-action="set-agentkey" />
+    <span class="lbl" style="margin-left:auto">Clave del agente: en el server (Cloudflare), no en el navegador</span>
   </div>`;
 }
 

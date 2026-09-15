@@ -48,12 +48,12 @@ const state = {
     { day: 2, time: "14:00", title: "Publicar aviso de búsqueda", agent: "RRHH" },
   ],
   hireForm: { role: "Cobranzas", client: "", perms: ["leer"], autonomy: "supervisado" },
+  // La clave del agente ya no vive acá: la usa el server en functions/api/pedidos.js.
   config: {
-    storeId: localStorage.getItem("cc_store_id") || STORES[2].id,
-    agentKey: localStorage.getItem("cc_agent_key") || "",
+    storeId: localStorage.getItem("cc_store_id") || STORES[0].id,
   },
   agents: [
-    { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: "Morfi Empresas", status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
+    { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: "Morfi Viandas CABA", status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
     { code: "CAJA", nombre: "Caja", rol: "Reservado — futuras capacidades de facturación y finanzas", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
     { code: "SOPORTE", nombre: "Soporte", rol: "Atención por WhatsApp y resolución de consultas", cliente: "Gaucho Natural Pet", status: "trabajando", progress: 62, tarea: "Respondiendo consultas de stock", paso: "Redactando respuesta 4/7", tools: ["whatsapp-api (mock)"], real: false, log: [], lastResult: null },
     { code: "MARKETING", nombre: "Marketing", rol: "Campañas y contenido en redes", cliente: "Morfi Viandas CABA", status: "aprobacion", progress: 100, tarea: "Campaña de fin de semana", paso: "Esperando aprobación de copy", tools: ["meta-ads (mock)"], real: false, log: [], lastResult: null },
@@ -157,11 +157,6 @@ async function runPedidosTask(agent, text) {
     addChat("PEDIDOS", 'No pude identificar la empresa. Probá: "pedidos de Argentina Valores desde 10/09/2026".');
     return;
   }
-  if (!state.config.agentKey) {
-    addChat("PEDIDOS", "Falta la clave del agente (x-agent-key). Abrí la ficha de PEDIDOS y pegala en Configuración.");
-    return;
-  }
-
   agent.status = "trabajando";
   agent.progress = 15;
   agent.tarea = `Consultando pedidos de ${companyName}`;
@@ -170,7 +165,7 @@ async function runPedidosTask(agent, text) {
   render();
 
   try {
-    const data = await TOOLS.pedidos.call({ storeId: state.config.storeId, companyName, from, to, agentKey: state.config.agentKey });
+    const data = await TOOLS.pedidos.call({ storeId: state.config.storeId, companyName, from, to });
     const result = buildPedidosResult(data, companyName);
     agent.progress = 100;
     agent.status = "completado";
@@ -382,8 +377,6 @@ function render() {
     mount.innerHTML = renderAgente(getAgent(selectedAgentCode), STATUS_META[getAgent(selectedAgentCode).status], STORES);
     const cfgStore = document.getElementById("cfgStore");
     if (cfgStore) cfgStore.value = state.config.storeId;
-    const cfgKey = document.getElementById("cfgAgentKey");
-    if (cfgKey) cfgKey.value = state.config.agentKey;
   } else if (state.screen === "mando") {
     mount.innerHTML = renderMando(state, STATUS_META);
     layoutOrbits();
@@ -465,7 +458,6 @@ document.getElementById("app").addEventListener("input", (e) => {
 });
 document.getElementById("app").addEventListener("change", (e) => {
   if (e.target.id === "cfgStore") { state.config.storeId = e.target.value; localStorage.setItem("cc_store_id", e.target.value); }
-  if (e.target.id === "cfgAgentKey") { state.config.agentKey = e.target.value; localStorage.setItem("cc_agent_key", e.target.value); }
   if (e.target.id === "hireRole") { state.hireForm.role = e.target.value; render(); }
 });
 

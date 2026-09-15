@@ -1,9 +1,11 @@
 // tools.js — capa de herramientas reales.
 // Cada capacidad real del sistema (hoy solo PEDIDOS) se agrega acá como una entrada
 // nueva en TOOLS, sin tocar app.js ni templates.js. Nada en este archivo simula nada:
-// si falla, falla de verdad (red, CORS, 401, etc.) y el error sube tal cual.
-
-const SUPABASE_FUNCTIONS_URL = "https://pjrhfbhqdbyoljactdkj.supabase.co/functions/v1";
+// si falla, falla de verdad (red, 401, 502, etc.) y el error sube tal cual.
+//
+// El llamado va contra /api/* — Pages Functions de este mismo proyecto — y no contra
+// Supabase directo: la Edge Function no acepta este origin por CORS, y su clave
+// (x-agent-key) no puede estar en el navegador. Ver functions/api/pedidos.js.
 
 const STORES = [
   { id: "c6bdba04-6b9c-4762-981e-3314164e4a66", nombre: "Morfi Viandas CABA" },
@@ -15,18 +17,15 @@ const STORES = [
 const TOOLS = {
   pedidos: {
     key: "get-company-orders",
-    async call({ storeId, companyName, from, to, agentKey }) {
-      if (!agentKey) throw new Error("Falta la clave del agente (x-agent-key).");
+    async call({ storeId, companyName, from, to }) {
       if (!storeId) throw new Error("Falta elegir la tienda.");
       if (!companyName) throw new Error("Falta el nombre de la empresa.");
 
-      const params = new URLSearchParams({ store_id: storeId, company_name: companyName, limit: "200" });
+      const params = new URLSearchParams({ store_id: storeId, company_name: companyName });
       if (from) params.set("from", from);
       if (to) params.set("to", to);
 
-      const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/get-company-orders?${params.toString()}`, {
-        headers: { "x-agent-key": agentKey },
-      });
+      const res = await fetch(`/api/pedidos?${params.toString()}`);
       let data;
       try {
         data = await res.json();
