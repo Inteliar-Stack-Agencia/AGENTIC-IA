@@ -46,16 +46,19 @@ const state = {
   config: {
     storeId: localStorage.getItem("cc_store_id") || STORES[0].id,
   },
+  // Los 5 puestos salen de un relevamiento de la base: son las únicas áreas con
+  // datos reales detrás. MARKETING, RRHH, LEGAL y SOPORTE se eliminaron porque no
+  // tienen ninguna tabla que los respalde (bot_feedback y bot_pending_actions
+  // están vacías) — no se pueden volver reales, solo simular.
+  //
+  // `pendiente` nombra la Edge Function que falta construir para ese puesto. No es
+  // una aspiración vaga: es el próximo trabajo concreto, contra datos que existen.
   agents: [
-    { code: "PEDIDOS", nombre: "Pedidos", rol: "Consulta y análisis de pedidos por empresa (get-company-orders)", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], real: true, log: [], lastResult: null },
-    { code: "CAJA", nombre: "Caja", rol: "Facturación y finanzas — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "SOPORTE", nombre: "Soporte", rol: "Atención por WhatsApp — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "MARKETING", nombre: "Marketing", rol: "Campañas y contenido — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "VENTAS", nombre: "Ventas", rol: "Seguimiento comercial — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "RRHH", nombre: "RRHH", rol: "Reclutamiento y onboarding — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "LEGAL", nombre: "Legal", rol: "Contratos y compliance — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "DATOS", nombre: "Datos", rol: "Analítica e informes — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
-    { code: "OPS", nombre: "Ops", rol: "Operaciones y logística — sin herramienta conectada", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], real: false, log: [], lastResult: null },
+    { code: "PEDIDOS", nombre: "Pedidos", rol: "Pedidos por empresa, persona y fecha", datos: "orders · 197 filas", cliente: storeName(localStorage.getItem("cc_store_id") || STORES[0].id), status: "inactivo", progress: 0, tarea: null, paso: null, tools: ["get-company-orders"], pendiente: null, real: true, log: [], lastResult: null },
+    { code: "DESPACHOS", nombre: "Despachos", rol: "Qué se despachó a cada empresa y cuándo", datos: "company_dispatches · 240 filas, última el 13/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-dispatches", real: false, log: [], lastResult: null },
+    { code: "FACTURACION", nombre: "Facturación", rol: "Facturas emitidas por empresa y período", datos: "company_invoices · 30 filas, última el 07/09", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-invoices", real: false, log: [], lastResult: null },
+    { code: "GASTOS", nombre: "Gastos", rol: "Gastos y proveedores por período", datos: "expenses · 88 filas · suppliers · 8", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-expenses", real: false, log: [], lastResult: null },
+    { code: "CLIENTES", nombre: "Clientes", rol: "Empresas cliente y sus precios acordados", datos: "company_clients · 11 · company_client_prices · 29", cliente: "—", status: "inactivo", progress: 0, tarea: null, paso: null, tools: [], pendiente: "get-company-clients", real: false, log: [], lastResult: null },
   ],
 };
 
@@ -63,15 +66,11 @@ function getAgent(code) { return state.agents.find(a => a.code === code); }
 
 // ── Ruteo por palabras clave (mismo patrón que ROUTES del prototipo) ─
 const ROUTES = [
-  ["PEDIDOS", ["pedido", "pedidos", "compra", "compras", "orden", "ordenes", "órdenes", "factura", "facturas", "empresa"]],
-  ["CAJA", ["caja", "cobranza", "cobro", "pago", "pagos", "finanzas", "facturacion", "facturación"]],
-  ["SOPORTE", ["whatsapp", "consulta", "soporte", "reclamo"]],
-  ["MARKETING", ["campaña", "campana", "marketing", "redes", "instagram", "publicidad"]],
-  ["VENTAS", ["venta", "ventas", "lead", "leads", "cotizacion", "cotización"]],
-  ["RRHH", ["rrhh", "recursos humanos", "reclutamiento", "busqueda", "búsqueda", "contratar personal"]],
-  ["LEGAL", ["contrato", "legal", "compliance", "terminos", "términos"]],
-  ["DATOS", ["informe", "reporte", "analitica", "analítica", "dashboard"]],
-  ["OPS", ["despacho", "logistica", "logística", "ruta", "reparto", "entrega"]],
+  ["DESPACHOS", ["despacho", "despachos", "despacho", "entrega", "entregas", "reparto", "envio", "envío"]],
+  ["FACTURACION", ["factura", "facturas", "facturacion", "facturación", "remito", "remitos"]],
+  ["GASTOS", ["gasto", "gastos", "proveedor", "proveedores", "compra a", "egreso", "egresos"]],
+  ["CLIENTES", ["cliente", "clientes", "precio", "precios", "lista de precios", "empresa cliente"]],
+  ["PEDIDOS", ["pedido", "pedidos", "orden", "ordenes", "órdenes", "compra", "compras", "empresa"]],
 ];
 
 function normalize(s) {
@@ -196,7 +195,46 @@ async function runPedidosTask(agent, text) {
   }
 }
 
-// ── Layout orbital (posiciona los 9 nodos alrededor del núcleo) ─────
+function storeName(id) {
+  const s = STORES.find(x => x.id === id);
+  return s ? s.nombre : "—";
+}
+
+// PEDIDOS consulta la tienda que esté elegida en el selector, no una fija. Si el
+// cliente que muestra la ficha no se sincroniza, el panel puede decir una tienda
+// mientras la consulta sale contra otra — y los números parecerían de quien no son.
+function syncRealAgentClient() {
+  const pedidos = getAgent("PEDIDOS");
+  if (pedidos) pedidos.cliente = storeName(state.config.storeId);
+}
+
+// ── Despacho de tareas ───────────────────────────────────────────────
+async function handleDispatch(text) {
+  text = text.trim();
+  if (!text) return;
+  addChat("Vos", text);
+  state.draftText = "";
+
+  const code = routeTask(text);
+  if (!code) {
+    addChat("NÚCLEO", 'No identifiqué a qué empleado corresponde. Probá mencionar "pedidos", "despachos", "facturas", "gastos" o "clientes".');
+    render();
+    return;
+  }
+
+  const agent = getAgent(code);
+  if (!agent.real) {
+    addChat(code, `Todavía no puedo hacerlo: me falta la herramienta "${agent.pendiente}". Los datos existen (${agent.datos}), pero la Edge Function que los expone no está construida. No lo simulo.`);
+    render();
+    return;
+  }
+
+  render();
+  await runPedidosTask(agent, text);
+  render();
+}
+
+// ── Layout orbital (posiciona los nodos alrededor del núcleo) ────────
 // NODE_HALF_W/H son el medio ancho y alto que ocupa un nodo (avatar + etiqueta):
 // el radio máximo se calcula restándolos para que ningún nodo quede cortado por
 // el borde del stage, en vez de usar radios fijos que se salen en pantallas chicas.
@@ -330,6 +368,7 @@ function render() {
   document.getElementById("navItems").innerHTML = renderNav(SCREENS, state.screen, { aprobaciones: state.approvals.length || "" });
   document.getElementById("statEmpresas").textContent = new Set(state.agents.map(a => a.cliente).filter(c => c && c !== "—")).size;
   document.getElementById("statAgentes").textContent = state.agents.length;
+  document.getElementById("statReales").textContent = `${state.agents.filter(a => a.real).length} / ${state.agents.length}`;
 
   const mount = document.getElementById("screen-mount");
   if (selectedAgentCode) {
