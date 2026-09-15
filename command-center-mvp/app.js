@@ -244,41 +244,94 @@ async function handleDispatch(text) {
 }
 
 // ── Layout orbital (posiciona los 9 nodos alrededor del núcleo) ─────
+// NODE_HALF_W/H son el medio ancho y alto que ocupa un nodo (avatar + etiqueta):
+// el radio máximo se calcula restándolos para que ningún nodo quede cortado por
+// el borde del stage, en vez de usar radios fijos que se salen en pantallas chicas.
+const NODE_HALF_W = 66, NODE_HALF_H = 62, STAGE_PAD = 18;
+let orbitAngle = 0;
+
 function layoutOrbits() {
   const stage = document.getElementById("stage");
   if (!stage) return;
   const rect = stage.getBoundingClientRect();
   const cx = rect.width / 2, cy = rect.height / 2;
-  const base = Math.min(rect.width, rect.height) / 2;
-  const RADII = { 1: Math.max(120, base * 0.42), 2: Math.max(190, base * 0.65), 3: Math.max(250, base * 0.86) };
+  const rMax = Math.max(120, Math.min(
+    rect.width / 2 - NODE_HALF_W - STAGE_PAD,
+    rect.height / 2 - NODE_HALF_H - STAGE_PAD,
+  ));
+  const RADII = { 1: rMax * 0.74, 2: rMax * 0.87, 3: rMax };
 
   const byRing = { 1: [], 2: [], 3: [] };
   state.agents.forEach(a => byRing[STATUS_META[a.status].ring].push(a));
 
-  const positions = {};
-  for (const ring of [1, 2, 3]) {
-    const arr = byRing[ring];
-    const n = arr.length;
-    arr.forEach((a, i) => {
-      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(n, 1) + ring * 0.15;
-      positions[a.code] = { x: cx + RADII[ring] * Math.cos(angle), y: cy + RADII[ring] * Math.sin(angle) };
-    });
+  // Antes cada anillo repartía sus ángulos por separado (empezando siempre
+  // arriba), así que agentes de anillos distintos terminaban en la misma
+  // dirección y sus nodos se superponían. Ahora se intercalan los anillos
+  // y se reparte un único ángulo por agente entre los 9 — nunca dos agentes
+  // comparten ni quedan cerca en dirección, sin importar en qué anillo estén.
+  const ordered = [];
+  const maxLen = Math.max(byRing[1].length, byRing[2].length, byRing[3].length);
+  for (let i = 0; i < maxLen; i++) {
+    for (const ring of [1, 2, 3]) {
+      if (byRing[ring][i]) ordered.push(byRing[ring][i]);
+    }
   }
+
+  const positions = {};
+  const n = ordered.length;
+  ordered.forEach((a, i) => {
+    const ring = STATUS_META[a.status].ring;
+    const angle = -Math.PI / 2 + orbitAngle + (i * 2 * Math.PI) / Math.max(n, 1);
+    positions[a.code] = {
+      x: cx + RADII[ring] * Math.cos(angle),
+      y: cy + RADII[ring] * Math.sin(angle),
+      below: Math.sin(angle) < -0.05,
+    };
+  });
 
   document.querySelectorAll(".agent-node").forEach(node => {
     const code = node.dataset.code;
     const p = positions[code];
-    if (p) { node.style.left = p.x + "px"; node.style.top = p.y + "px"; }
+    if (!p) return;
+    node.style.left = p.x + "px";
+    node.style.top = p.y + "px";
+    // En la mitad de arriba la etiqueta va arriba del avatar y en la de abajo,
+    // abajo — así el texto siempre queda del lado de afuera de la órbita.
+    const btn = node.querySelector(".agent-btn");
+    if (btn) {
+      btn.classList.toggle("dir-reverse", p.below);
+      btn.classList.toggle("dir-normal", !p.below);
+    }
   });
 
   const svg = document.getElementById("orbitLines");
   if (svg) {
-    svg.innerHTML = state.agents.map(a => {
-      const p = positions[a.code];
-      const meta = STATUS_META[a.status];
-      if (!p) return "";
-      return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="${meta.color}" stroke-width="1.5" stroke-dasharray="4 6" opacity="${meta.anim ? 0.85 : 0.3}" ${meta.anim ? 'style="animation: dashFlow 1s linear infinite"' : ""}/>`;
-    }).join("");
+    // Se rearma solo cuando cambia el contenido (render nuevo). En los ticks de
+    // rotación se mueven los atributos: si reasignara innerHTML 11 veces por
+    // segundo, la animación dashFlow de las líneas arrancaría de cero cada vez.
+    if (!svg.dataset.built) {
+      svg.innerHTML = [
+        ...[1, 2, 3].map(r => `<circle class="orbit-guide" data-ring="${r}" fill="none" stroke="rgba(243,242,242,.14)" stroke-width="1" stroke-dasharray="2 5"/>`),
+        ...state.agents.map(a => {
+          const meta = STATUS_META[a.status];
+          return `<line data-code="${a.code}" stroke="${meta.color}" stroke-width="1.5" stroke-dasharray="4 6" opacity="${meta.anim ? 0.85 : 0.3}" ${meta.anim ? 'style="animation: dashFlow 1s linear infinite"' : ""}/>`;
+        }),
+      ].join("");
+      svg.dataset.built = "1";
+    }
+    svg.querySelectorAll("circle.orbit-guide").forEach(c => {
+      c.setAttribute("cx", cx);
+      c.setAttribute("cy", cy);
+      c.setAttribute("r", RADII[c.dataset.ring]);
+    });
+    svg.querySelectorAll("line[data-code]").forEach(line => {
+      const p = positions[line.dataset.code];
+      if (!p) return;
+      line.setAttribute("x1", cx);
+      line.setAttribute("y1", cy);
+      line.setAttribute("x2", p.x);
+      line.setAttribute("y2", p.y);
+    });
   }
 }
 
@@ -431,5 +484,18 @@ setInterval(() => {
     if (changed) render();
   }
 }, 4000);
+
+// Rotación lenta de la órbita (~6 minutos por vuelta). Solo reposiciona los
+// nodos, no re-renderiza: si rearmara el HTML perdería el foco del input de
+// despacho y el scroll del chat en cada tick.
+setInterval(() => {
+  if (state.screen !== "mando" || selectedAgentCode) return;
+  orbitAngle = (orbitAngle + 0.0016) % (Math.PI * 2);
+  layoutOrbits();
+}, 90);
+
+window.addEventListener("resize", () => {
+  if (state.screen === "mando" && !selectedAgentCode) layoutOrbits();
+});
 
 render();
