@@ -36,6 +36,26 @@ const TOOLS = {
     },
   },
 
+  clientes: {
+    key: "get-company-clients",
+    async call({ storeId, incluirInactivas }) {
+      if (!storeId) throw new Error("Falta elegir la tienda.");
+
+      const params = new URLSearchParams({ store_id: storeId });
+      if (incluirInactivas) params.set("include_inactive", "true");
+
+      const res = await fetch(`/api/clientes?${params.toString()}`);
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Respuesta inválida del servidor (HTTP ${res.status}).`);
+      }
+      if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+      return data;
+    },
+  },
+
   pedidos: {
     key: "get-company-orders",
     async call({ storeId, companyName, from, to }) {
