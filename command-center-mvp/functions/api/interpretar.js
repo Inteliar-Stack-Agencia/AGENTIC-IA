@@ -18,55 +18,69 @@ const MODELOS = {
 
 // Catálogo que ve el modelo. Agregar una herramienta acá es lo único que hace
 // falta para que pueda rutearse — el resto del sistema no cambia.
+// `obligatorios` y `opcionales` van separados a propósito: cuando los parámetros
+// se listaban juntos, el modelo dedujo que "proveedor" era obligatorio para
+// gastos y rechazó "qué gastamos este mes", que es una consulta válida.
 const HERRAMIENTAS = [
   {
     nombre: "pedidos",
     descripcion: "Pedidos de una empresa cliente: qué pidió cada persona, cuándo, qué productos y por cuánto.",
     disponible: true,
-    parametros: ["empresa (obligatorio)", "desde (YYYY-MM-DD)", "hasta (YYYY-MM-DD)"],
+    obligatorios: ["empresa"],
+    opcionales: ["desde", "hasta"],
   },
   {
     nombre: "despachos",
     descripcion: "Qué se despachó a cada empresa y cuándo.",
     disponible: false,
-    parametros: ["empresa", "desde", "hasta"],
+    obligatorios: [],
+    opcionales: ["empresa", "desde", "hasta"],
   },
   {
     nombre: "facturacion",
     descripcion: "Facturas emitidas por empresa y período.",
     disponible: false,
-    parametros: ["empresa", "desde", "hasta"],
+    obligatorios: [],
+    opcionales: ["empresa", "desde", "hasta"],
   },
   {
     nombre: "gastos",
-    descripcion: "Gastos y proveedores por período.",
+    descripcion: "Gastos y proveedores por período. Sin proveedor, devuelve todos.",
     disponible: false,
-    parametros: ["proveedor", "desde", "hasta"],
+    obligatorios: [],
+    opcionales: ["proveedor", "desde", "hasta"],
   },
   {
     nombre: "clientes",
-    descripcion: "Empresas cliente y sus precios acordados.",
+    descripcion: "Empresas cliente y sus precios acordados. Sin empresa, las lista todas.",
     disponible: false,
-    parametros: ["empresa"],
+    obligatorios: [],
+    opcionales: ["empresa"],
   },
 ];
 
 function systemPrompt(hoy) {
-  return `Sos el ruteador de un panel de operaciones. Convertís un pedido en lenguaje natural en una consulta estructurada. No respondés preguntas ni consultás datos: solo traducís.
+  return `Sos el ruteador de un panel de operaciones. Convertís un pedido en lenguaje natural en una consulta estructurada.
 
 Hoy es ${hoy} (zona horaria de Argentina).
 
 Herramientas:
-${HERRAMIENTAS.map(h => `- ${h.nombre}${h.disponible ? "" : " (NO DISPONIBLE todavía)"}: ${h.descripcion} Parámetros: ${h.parametros.join(", ")}.`).join("\n")}
+${HERRAMIENTAS.map(h => `- ${h.nombre}${h.disponible ? "" : " (NO DISPONIBLE todavía)"}: ${h.descripcion} Obligatorios: ${h.obligatorios.join(", ") || "ninguno"}. Opcionales: ${h.opcionales.join(", ") || "ninguno"}.`).join("\n")}
 
 Respondé SOLO con un objeto JSON, sin texto alrededor, con esta forma:
-{"herramienta": "<nombre>", "empresa": "<texto o null>", "desde": "<YYYY-MM-DD o null>", "hasta": "<YYYY-MM-DD o null>", "persona": "<texto o null>", "confianza": "alta|media|baja", "interpretacion": "<una frase explicando qué entendiste>"}
+{"herramienta": "<nombre>", "empresa": "<texto o null>", "desde": "<YYYY-MM-DD o null>", "hasta": "<YYYY-MM-DD o null>", "persona": "<texto o null>", "confianza": "alta|media|baja", "interpretacion": "<una frase>", "ajustes": ["<cada arreglo que hiciste sobre lo que pidió el usuario>"]}
 
-Si no podés determinar la herramienta, devolvé {"herramienta": null, "interpretacion": "<qué falta para poder resolverlo>"}.
+Si no podés determinar la herramienta, devolvé {"herramienta": null, "interpretacion": "<qué necesitás que aclare>"}.
 
-Reglas de fechas: resolvé expresiones relativas contra la fecha de hoy. "la semana pasada" es de lunes a domingo de la semana anterior. "el jueves" sin más es el jueves más reciente ya pasado. "este mes" arranca el día 1 del mes actual. Si el pedido no menciona ninguna fecha, devolvé null en desde y hasta — nunca inventes un rango.
+Un parámetro que no es obligatorio nunca se exige: si no está, la herramienta devuelve todo. "Qué gastamos este mes" es una consulta válida sin proveedor.
 
-Nunca corrijas ni completes el nombre de una empresa: copiá lo que dijo el usuario. El emparejamiento difuso lo hace la herramienta.`;
+Reglas de fechas: resolvé expresiones relativas contra la fecha de hoy. "la semana pasada" es de lunes a domingo de la semana anterior, con ambos extremos. "el jueves" sin más es el jueves más reciente ya pasado, un solo día (desde y hasta iguales). "este mes" arranca el día 1 del mes actual. Si el pedido no menciona ninguna fecha, devolvé null en desde y hasta — nunca inventes un rango.
+
+Si el rango viene invertido (desde posterior a hasta), dalo vuelta y anotalo en "ajustes". Todo arreglo que hagas sobre lo que el usuario pidió va en "ajustes": el operador tiene que poder ver qué cambiaste. Si no cambiaste nada, devolvé una lista vacía.
+
+Nunca corrijas ni completes el nombre de una empresa: copiá lo que dijo el usuario. El emparejamiento difuso lo hace la herramienta.
+
+"interpretacion" la lee una persona que opera el panel, no un programador: escribila en una frase corta y concreta. Nunca describas tu propio funcionamiento, ni menciones "herramientas", "parámetros" ni "consultas estructuradas". Si algo no se puede responder, decí qué datos harían falta, en términos del negocio.`;
 }
 
 export async function onRequestPost(context) {

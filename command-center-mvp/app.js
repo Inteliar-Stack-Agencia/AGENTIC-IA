@@ -141,7 +141,9 @@ async function runPedidosTask(agent, consulta) {
     const desglose = Object.entries(result.porEstado)
       .map(([estado, v]) => `${v.pedidos} ${estado} (${money(v.monto)})`)
       .join(", ");
-    addChat("PEDIDOS", `Encontré ${result.count} pedido(s) de ${result.companyName}${from ? " desde " + from : ""} en ${storeName(state.config.storeId)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
+    addChat("PEDIDOS", result.count === 0
+      ? `No encontré pedidos de "${result.companyName}" en ${storeName(state.config.storeId)}, ${describirRango(from, to)}.`
+      : `Encontré ${result.count} pedido(s) de ${result.companyName} en ${storeName(state.config.storeId)}, ${describirRango(from, to)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
     showToast("PEDIDOS completó la tarea", `${result.count} pedidos de ${result.companyName}`);
     setTimeout(() => {
       if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
@@ -166,6 +168,16 @@ function storeName(id) {
 function syncRealAgentClient() {
   const pedidos = getAgent("PEDIDOS");
   if (pedidos) pedidos.cliente = storeName(state.config.storeId);
+}
+
+// El rango se escribe siempre completo, incluso cuando no hay filtro. Antes el
+// mensaje solo mostraba el "desde": era imposible saber si la consulta llegaba
+// hasta hoy o se cortaba antes, y un rango mal interpretado pasaba inadvertido.
+function describirRango(desde, hasta) {
+  if (desde && hasta) return `entre el ${desde} y el ${hasta}`;
+  if (desde) return `desde el ${desde} hasta hoy`;
+  if (hasta) return `hasta el ${hasta}`;
+  return "sin filtro de fechas (histórico completo)";
 }
 
 // ── Despacho de tareas ───────────────────────────────────────────────
@@ -214,10 +226,12 @@ async function handleDispatch(text) {
     return;
   }
 
-  // Cuando el modelo no está seguro, se muestra qué entendió antes de ejecutar:
-  // así un error de interpretación se ve en el chat y no queda escondido atrás
-  // de un resultado que parece correcto.
-  if (consulta.confianza === "baja") {
+  // Todo lo que el modelo decidió por su cuenta se declara antes de ejecutar: un
+  // rango dado vuelta o una fecha inferida cambian el resultado, y si no se avisan
+  // el número que sale después parece correcto sin serlo.
+  if (consulta.ajustes?.length) {
+    addChat(code, `Ajusté lo que pediste: ${consulta.ajustes.join("; ")}.`);
+  } else if (consulta.confianza === "baja") {
     addChat(code, `Interpreté: ${consulta.interpretacion}. Si no es lo que pediste, reformulalo.`);
   }
 
