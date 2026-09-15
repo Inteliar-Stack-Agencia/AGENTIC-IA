@@ -1,4 +1,5 @@
-// app.js — estado central, ruteo Núcleo → empleado, y la única integración real:
+// app.js — estado central, ruteo del Núcleo vía intérprete, y la única
+// integración de datos real:
 // PEDIDOS ejecutando get-company-orders. Nada se simula: los empleados sin
 // herramienta conectada lo dicen y no hacen nada. tools.js expone STORES y TOOLS;
 // templates.js expone las funciones render*.
@@ -30,7 +31,7 @@ function nowLabel() {
 // aprobaciones pendientes de mentira, ni actividad simulada: todo lo que
 // aparezca en pantalla salió de una ejecución real.
 //
-// PEDIDOS es la única capacidad real. Los otros 8 son puestos previstos sin
+// PEDIDOS es la única capacidad real. Los otros son puestos previstos sin
 // herramienta conectada — se muestran para saber qué falta, pero no simulan
 // trabajo: si se les despacha una tarea, lo dicen y no hacen nada.
 const state = {
@@ -63,46 +64,6 @@ const state = {
 };
 
 function getAgent(code) { return state.agents.find(a => a.code === code); }
-
-// ── Ruteo por palabras clave (mismo patrón que ROUTES del prototipo) ─
-const ROUTES = [
-  ["DESPACHOS", ["despacho", "despachos", "despacho", "entrega", "entregas", "reparto", "envio", "envío"]],
-  ["FACTURACION", ["factura", "facturas", "facturacion", "facturación", "remito", "remitos"]],
-  ["GASTOS", ["gasto", "gastos", "proveedor", "proveedores", "compra a", "egreso", "egresos"]],
-  ["CLIENTES", ["cliente", "clientes", "precio", "precios", "lista de precios", "empresa cliente"]],
-  ["PEDIDOS", ["pedido", "pedidos", "orden", "ordenes", "órdenes", "compra", "compras", "empresa"]],
-];
-
-function normalize(s) {
-  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
-
-function routeTask(text) {
-  const t = normalize(text);
-  for (const [code, keywords] of ROUTES) {
-    if (keywords.some(k => t.includes(normalize(k)))) return code;
-  }
-  return null;
-}
-
-// ── Parseo simple de "pedidos de <empresa> desde <fecha> hasta <fecha>" ──
-// Heurística para la demo del chat, no NLP real: la búsqueda por formulario
-// (como en empleado-digital-mvp) sigue siendo la vía confiable.
-function toISO(d, m, y) {
-  if (y.length === 2) y = "20" + y;
-  return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-}
-
-function parseOrderQuery(text) {
-  const dateRe = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/g;
-  const dates = [...text.matchAll(dateRe)].map(m => toISO(m[1], m[2], m[3]));
-  const clean = text
-    .replace(dateRe, " ")
-    .replace(/\b(pedidos?|traeme|necesito|quiero|consulta|consultar|dame|de|del|desde|hasta|entre|el|la|los|las|facturas?|compras?|ordenes|órdenes|y)\b/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return { companyName: clean, from: dates[0] || null, to: dates[1] || null };
-}
 
 // ── Chat / feed / logs ───────────────────────────────────────────────
 function addChat(who, text) {
@@ -156,12 +117,11 @@ function buildPedidosResult(data, companyName) {
   return { companyName: data.company_name || companyName, count: data.count || 0, rows, totalGeneral, porEstado };
 }
 
-async function runPedidosTask(agent, text) {
-  const { companyName, from, to } = parseOrderQuery(text);
-  if (!companyName) {
-    addChat("PEDIDOS", 'No pude identificar la empresa. Probá: "pedidos de Argentina Valores desde 10/09/2026".');
-    return;
-  }
+async function runPedidosTask(agent, consulta) {
+  const companyName = consulta.empresa;
+  const from = consulta.desde || null;
+  const to = consulta.hasta || null;
+
   agent.status = "trabajando";
   agent.progress = 15;
   agent.tarea = `Consultando pedidos de ${companyName}`;
@@ -209,28 +169,59 @@ function syncRealAgentClient() {
 }
 
 // ── Despacho de tareas ───────────────────────────────────────────────
+// Cada herramienta del intérprete corresponde a un empleado.
+const HERRAMIENTA_A_AGENTE = {
+  pedidos: "PEDIDOS",
+  despachos: "DESPACHOS",
+  facturacion: "FACTURACION",
+  gastos: "GASTOS",
+  clientes: "CLIENTES",
+};
+
 async function handleDispatch(text) {
   text = text.trim();
   if (!text) return;
   addChat("Vos", text);
   state.draftText = "";
+  render();
 
-  const code = routeTask(text);
+  let consulta;
+  try {
+    consulta = await TOOLS.interpretar.call({ texto: text });
+  } catch (err) {
+    addChat("NÚCLEO", `No pude interpretar el pedido: ${err.message}`);
+    render();
+    return;
+  }
+
+  const code = HERRAMIENTA_A_AGENTE[consulta.herramienta];
   if (!code) {
-    addChat("NÚCLEO", 'No identifiqué a qué empleado corresponde. Probá mencionar "pedidos", "despachos", "facturas", "gastos" o "clientes".');
+    addChat("NÚCLEO", consulta.interpretacion || "No identifiqué a qué empleado corresponde este pedido.");
     render();
     return;
   }
 
   const agent = getAgent(code);
   if (!agent.real) {
-    addChat(code, `Todavía no puedo hacerlo: me falta la herramienta "${agent.pendiente}". Los datos existen (${agent.datos}), pero la Edge Function que los expone no está construida. No lo simulo.`);
+    addChat(code, `Entendí el pedido (${consulta.interpretacion}), pero todavía no puedo ejecutarlo: me falta la herramienta "${agent.pendiente}". Los datos existen (${agent.datos}), pero la Edge Function que los expone no está construida. No lo simulo.`);
     render();
     return;
   }
 
-  render();
-  await runPedidosTask(agent, text);
+  if (!consulta.empresa) {
+    addChat(code, "Entendí que querés consultar pedidos, pero no identifiqué de qué empresa. Decime el nombre y lo busco.");
+    render();
+    return;
+  }
+
+  // Cuando el modelo no está seguro, se muestra qué entendió antes de ejecutar:
+  // así un error de interpretación se ve en el chat y no queda escondido atrás
+  // de un resultado que parece correcto.
+  if (consulta.confianza === "baja") {
+    addChat(code, `Interpreté: ${consulta.interpretacion}. Si no es lo que pediste, reformulalo.`);
+  }
+
+  await runPedidosTask(agent, consulta);
   render();
 }
 

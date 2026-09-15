@@ -15,6 +15,27 @@ const STORES = [
 ];
 
 const TOOLS = {
+  // No consulta datos: traduce lenguaje natural a una consulta estructurada.
+  // Ver functions/api/interpretar.js.
+  interpretar: {
+    key: "interpretar",
+    async call({ texto }) {
+      const res = await fetch("/api/interpretar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Respuesta inválida del intérprete (HTTP ${res.status}).`);
+      }
+      if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+      return data;
+    },
+  },
+
   pedidos: {
     key: "get-company-orders",
     async call({ storeId, companyName, from, to }) {
