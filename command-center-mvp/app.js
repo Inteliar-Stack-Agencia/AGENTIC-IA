@@ -119,6 +119,7 @@ async function runPedidosTask(agent, consulta) {
   const companyName = consulta.empresa;
   const from = consulta.desde || null;
   const to = consulta.hasta || null;
+  const storeId = consulta.store_id_efectivo || state.config.storeId;
 
   agent.status = "trabajando";
   agent.progress = 15;
@@ -128,7 +129,7 @@ async function runPedidosTask(agent, consulta) {
   render();
 
   try {
-    const data = await TOOLS.pedidos.call({ storeId: state.config.storeId, companyName, from, to });
+    const data = await TOOLS.pedidos.call({ storeId, companyName, from, to });
     const result = buildPedidosResult(data, companyName);
     agent.progress = 100;
     agent.status = "completado";
@@ -140,8 +141,8 @@ async function runPedidosTask(agent, consulta) {
       .map(([estado, v]) => `${v.pedidos} ${estado} (${money(v.monto)})`)
       .join(", ");
     addChat("PEDIDOS", result.count === 0
-      ? `No encontré pedidos de "${result.companyName}" en ${storeName(state.config.storeId)}, ${describirRango(from, to)}.`
-      : `Encontré ${result.count} pedido(s) de ${result.companyName} en ${storeName(state.config.storeId)}, ${describirRango(from, to)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
+      ? `No encontré pedidos de "${result.companyName}" en ${storeName(storeId)}, ${describirRango(from, to)}.`
+      : `Encontré ${result.count} pedido(s) de ${result.companyName} en ${storeName(storeId)}, ${describirRango(from, to)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
     showToast("PEDIDOS completó la tarea", `${result.count} pedidos de ${result.companyName}`);
     setTimeout(() => {
       if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
@@ -191,6 +192,7 @@ const CONSULTAS_POR_PERIODO = {
 
 async function runConsultaPorPeriodo(agent, consulta) {
   const cfg = CONSULTAS_POR_PERIODO[agent.code];
+  const storeId = consulta.store_id_efectivo || state.config.storeId;
   agent.status = "trabajando";
   agent.progress = 20;
   agent.tarea = consulta.empresa ? `${agent.nombre} de ${consulta.empresa}` : `${agent.nombre} — ${describirRango(consulta.desde, consulta.hasta)}`;
@@ -200,7 +202,7 @@ async function runConsultaPorPeriodo(agent, consulta) {
 
   try {
     const data = await TOOLS[cfg.tool].call({
-      storeId: state.config.storeId,
+      storeId,
       clientId: consulta.empresa_id || null,
       desde: consulta.desde || null,
       hasta: consulta.hasta || null,
@@ -218,7 +220,7 @@ async function runConsultaPorPeriodo(agent, consulta) {
     // esa empresa. Se avisa en vez de devolver un número atribuido a quien no es.
     const sinFiltro = consulta.empresa && !consulta.empresa_id;
     addChat(agent.code, [
-      `${cfg.resumen(data)} en ${storeName(state.config.storeId)}, ${describirRango(consulta.desde, consulta.hasta)}.`,
+      `${cfg.resumen(data)} en ${storeName(storeId)}, ${describirRango(consulta.desde, consulta.hasta)}.`,
       sinFiltro ? `Ojo: "${consulta.empresa}" no figura entre las empresas registradas, así que esto es de toda la tienda, no solo de esa empresa.` : "",
     ].filter(Boolean).join(" "));
 
@@ -237,6 +239,7 @@ async function runConsultaPorPeriodo(agent, consulta) {
 
 // ── CLIENTES → get-company-clients ───────────────────────────────────
 async function runClientesTask(agent, consulta) {
+  const storeId = consulta.store_id_efectivo || state.config.storeId;
   agent.status = "trabajando";
   agent.progress = 20;
   agent.tarea = consulta.empresa ? `Buscando a ${consulta.empresa}` : "Listando empresas cliente";
@@ -245,7 +248,7 @@ async function runClientesTask(agent, consulta) {
   render();
 
   try {
-    const data = await TOOLS.clientes.call({ storeId: state.config.storeId });
+    const data = await TOOLS.clientes.call({ storeId });
     const todos = data.clients || [];
     // El filtro por empresa se hace acá y no en la Edge Function: el catálogo de
     // una tienda son decenas de filas, traerlo entero y filtrar es más simple que
@@ -262,8 +265,8 @@ async function runClientesTask(agent, consulta) {
     pushFeed(agent, `Listó ${clients.length} empresa(s) cliente.`, "ok");
 
     addChat("CLIENTES", clients.length === 0
-      ? `No encontré empresas que coincidan con "${consulta.empresa}" en ${storeName(state.config.storeId)}. Hay ${todos.length} registradas.`
-      : `${clients.length} empresa(s) en ${storeName(state.config.storeId)}: ${clients.map(c => `${c.name}${c.prices_count ? ` (${c.prices_count} precios pactados)` : " (sin precios pactados)"}`).join(", ")}.`);
+      ? `No encontré empresas que coincidan con "${consulta.empresa}" en ${storeName(storeId)}. Hay ${todos.length} registradas.`
+      : `${clients.length} empresa(s) en ${storeName(storeId)}: ${clients.map(c => `${c.name}${c.prices_count ? ` (${c.prices_count} precios pactados)` : " (sin precios pactados)"}`).join(", ")}.`);
 
     showToast("CLIENTES completó la tarea", `${clients.length} empresa(s)`);
     setTimeout(() => {
@@ -384,7 +387,7 @@ async function handleDispatch(text) {
       filas: agent.lastResult?.rows?.length ?? agent.lastResult?.filas?.length ?? agent.lastResult?.clients?.length ?? null,
       error: agent.status === "error" ? agent.paso : null,
       duracion_ms: Date.now() - arranque,
-      parametros: { empresa: consulta.empresa ?? null, empresa_id: consulta.empresa_id ?? null, desde: consulta.desde ?? null, hasta: consulta.hasta ?? null, store_id: state.config.storeId },
+      parametros: { empresa: consulta.empresa ?? null, empresa_id: consulta.empresa_id ?? null, desde: consulta.desde ?? null, hasta: consulta.hasta ?? null, store_id: consulta.store_id_efectivo || state.config.storeId },
     });
   } catch (err) {
     await cerrarRegistro(agent, { estado: "error", error: err.message, duracion_ms: Date.now() - arranque });

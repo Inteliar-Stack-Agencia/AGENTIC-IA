@@ -114,7 +114,14 @@ Ninguna llega al navegador. Todas se usan desde Pages Functions.
   lee: cada mensaje se sigue interpretando aislado.
 - **CORS.** Las Edge Functions solo aceptan origins de vendexchat. Por eso todo
   llamado sale del server y no del navegador.
-- **Una sola tienda por consulta.** No hay consultas cruzadas entre tiendas.
+- **Sin consultas cruzadas entre tiendas.** Cada consulta resuelve a una única
+  tienda (la mencionada en el texto, o si no la que esté seleccionada) — no hay
+  forma de pedir "compará CABA con La Plata" en una sola consulta.
+- **`get-company-orders` exige una empresa.** No existe "todos los pedidos de la
+  tienda" sin filtrar por empresa cliente — la Edge Function rechaza la consulta
+  con 400 si falta `company_name`. No es un límite del intérprete: es un
+  requisito duro de la herramienta. Para pedidos de consumidor final sin empresa
+  asociada, hoy no hay ninguna herramienta.
 - **Un solo cliente conectado.** Etiquetar (`vxyayqbenzhxxsoozjks`) tiene datos
   aprovechables —licencias con vencimiento, eventos de usuario— pero todavía no
   está integrado.

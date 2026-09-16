@@ -13,6 +13,7 @@
 // modelo que esa tarea pida.
 
 import { abrirRun } from "./_ops.js";
+import { STORES, storeName, detectarTienda } from "./_stores.js";
 
 const MODELOS = {
   interpretar: "claude-haiku-4-5-20251001",
@@ -96,6 +97,16 @@ function resolverId(empresa, catalogo) {
   return catalogo.find(c => c.name.trim().toLowerCase() === buscado)?.id ?? null;
 }
 
+// Misma lógica para la sucursal: el modelo devuelve el nombre tal como figura
+// en STORES, el código resuelve el id. Antes la sucursal era siempre la que
+// estuviera seleccionada en el panel — si el texto mencionaba otra, se
+// ignoraba en silencio y la respuesta parecía de la sucursal correcta sin serlo.
+function resolverTiendaId(tienda) {
+  if (!tienda) return null;
+  const buscada = tienda.trim().toLowerCase();
+  return STORES.find(s => s.nombre.trim().toLowerCase() === buscada)?.id ?? null;
+}
+
 function systemPrompt(hoy, catalogo) {
   return `Sos el ruteador de un panel de operaciones. Convertís un pedido en lenguaje natural en una consulta estructurada.
 
@@ -146,7 +157,14 @@ export async function onRequestPost(context) {
   if (texto.length > 1000) return json({ error: "El texto es demasiado largo." }, 400);
 
   const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" });
-  const catalogo = await traerCatalogo(storeId, (env.AGENT_API_KEY || "").trim());
+
+  // La tienda se resuelve ANTES de traer el catálogo de empresas: si el texto
+  // menciona otra sucursal, el catálogo tiene que ser el de esa sucursal, no el
+  // de la que estaba seleccionada — si no, "empresa" se resolvería contra la
+  // lista de clientes equivocada.
+  const tiendaMencionada = detectarTienda(texto);
+  const storeIdEfectivo = tiendaMencionada?.id || storeId;
+  const catalogo = await traerCatalogo(storeIdEfectivo, (env.AGENT_API_KEY || "").trim());
 
   let res;
   try {
@@ -193,6 +211,12 @@ export async function onRequestPost(context) {
     return json({ error: `El modelo pidió una herramienta que no existe: ${consulta.herramienta}` }, 502);
   }
 
+  const ajustes = [...(consulta.ajustes || [])];
+  if (tiendaMencionada && tiendaMencionada.id !== storeId) {
+    ajustes.push(`Usé ${tiendaMencionada.nombre} porque la mencionaste, en vez de ${storeName(storeId) || "la tienda seleccionada"}.`);
+  }
+  consulta.ajustes = ajustes;
+
   // La interpretación la registra el server, no el navegador: es la parte que
   // el server conoce con certeza, y así queda asentada aunque el cliente nunca
   // llegue a ejecutar la consulta ni a reportar el resultado.
@@ -202,7 +226,7 @@ export async function onRequestPost(context) {
 
   const runId = await abrirRun(env, {
     cliente: "vendexchat",
-    store_id: storeId || null,
+    store_id: storeIdEfectivo || null,
     agente: consulta.herramienta || null,
     input: texto,
     interpretacion: consulta,
@@ -213,7 +237,7 @@ export async function onRequestPost(context) {
   });
 
   if (herramienta && !herramienta.disponible) {
-    return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo), run_id: runId }, 200);
+    return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo), store_id_efectivo: storeIdEfectivo, run_id: runId }, 200);
   }
 
   return json({
@@ -221,6 +245,7 @@ export async function onRequestPost(context) {
     empresa_id: resolverId(consulta.empresa, catalogo),
     disponible: true,
     catalogo: Boolean(catalogo),
+    store_id_efectivo: storeIdEfectivo,
     run_id: runId,
   }, 200);
 }
