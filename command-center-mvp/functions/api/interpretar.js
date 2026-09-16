@@ -137,7 +137,11 @@ Si lo que escribió no se parece a ninguna de la lista, devolvé el texto tal cu
 
 "interpretacion" la lee una persona que opera el panel, no un programador: escribila en una frase corta y concreta. Nunca describas tu propio funcionamiento, ni menciones "herramientas", "parámetros" ni "consultas estructuradas". Si algo no se puede responder, decí qué datos harían falta, en términos del negocio.
 
-La sucursal (tienda) ya se resuelve antes de que veas este mensaje — no forma parte de lo que vos decidís ni es un parámetro de ninguna herramienta. No opines sobre si algo "filtra por ubicación" o no: eso pasa en otra capa y no tenés visibilidad de cómo se resolvió.`;
+La sucursal (tienda) ya se resuelve antes de que veas este mensaje — no forma parte de lo que vos decidís ni es un parámetro de ninguna herramienta. No opines sobre si algo "filtra por ubicación" o no: eso pasa en otra capa y no tenés visibilidad de cómo se resolvió.
+
+Las sucursales son: ${STORES.map(s => s.nombre).join(", ")}. Si el texto menciona alguna de ellas, ignorala por completo al determinar "empresa" — no es un cliente, es dónde se resolvió la consulta. "Pedidos en Morfi La Plata" no tiene ninguna empresa mencionada; no intentes buscar "Morfi La Plata" en el catálogo de clientes.
+
+Si el usuario pide explícitamente que no se filtre por empresa ("todos los clientes", "todas las empresas", "sin filtrar por empresa", "en general", "cualquiera"), devolvé "empresa": null — es una consulta válida para "pedidos" y significa "traer todo, sin filtro", no "no pude identificar la empresa".`;
 }
 
 export async function onRequestPost(context) {
