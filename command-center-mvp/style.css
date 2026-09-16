@@ -294,3 +294,10 @@ input, select, textarea { font-family: inherit; }
 .config-bar { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 2px solid var(--line); background: var(--bg-panel); font-size: 12px; }
 .config-bar input { flex: 0 0 320px; background: var(--bg); border: 2px solid rgba(243,242,242,.2); padding: 7px 10px; color: var(--text); font-size: 12px; outline: none; }
 .config-bar .lbl { color: var(--text-faint); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+
+/* ── Señal de calidad del último resultado ── */
+.feedback-row { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-top: 2px solid var(--line); }
+.feedback-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin-right: auto; }
+.feedback-btn { border: 2px solid rgba(243,242,242,.25); background: transparent; color: var(--text); padding: 5px 12px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+.feedback-btn:hover { background: rgba(243,242,242,.08); }
+.feedback-btn-no { border-color: var(--ac); color: var(--ac); }

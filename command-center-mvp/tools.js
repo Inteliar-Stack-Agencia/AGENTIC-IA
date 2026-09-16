@@ -36,6 +36,27 @@ const TOOLS = {
     },
   },
 
+  // Cierra el registro de una ejecución y manda la señal de "esto estuvo mal".
+  // Nunca tira error hacia arriba: que no se pueda guardar la traza no puede
+  // romper una consulta que salió bien.
+  registro: {
+    key: "registro",
+    async call(datos) {
+      try {
+        const res = await fetch("/api/registro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos),
+        });
+        if (!res.ok) console.error("[registro]", res.status, await res.text());
+        return res.ok;
+      } catch (err) {
+        console.error("[registro]", err.message);
+        return false;
+      }
+    },
+  },
+
   // Las tres consultas por período comparten forma: misma tienda, mismo rango de
   // fechas, mismo manejo de error. Se generan desde una fábrica para que agregar
   // la próxima sea una línea y no otra copia del mismo bloque.

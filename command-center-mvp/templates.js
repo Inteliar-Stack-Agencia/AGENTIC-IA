@@ -82,6 +82,12 @@ function renderMando(state, STATUS_META) {
         <div class="chat-scroll" id="chatScroll">
           ${state.chat.map(renderChatRow).join("") || `<div class="chat-row"><div class="chat-who">NÚCLEO</div><div class="chat-body"><div class="chat-text">Escribí una tarea, por ejemplo: "pedidos de Argentina Valores desde 10/09/2026".</div></div></div>`}
         </div>
+        ${state.ultimoRun && !state.ultimoRun.marcado ? `
+        <div class="feedback-row">
+          <span class="feedback-label">¿El último resultado fue correcto?</span>
+          <button class="feedback-btn" data-action="feedback-ok">Sí</button>
+          <button class="feedback-btn feedback-btn-no" data-action="feedback-mal">No era esto</button>
+        </div>` : ""}
         <div class="dispatch-input-row">
           <input class="dispatch-input" id="dispatchInput" placeholder="Escribí una tarea..." value="${escapeHtml(state.draftText || "")}" />
           <button class="dispatch-send" data-action="send-dispatch">Enviar</button>

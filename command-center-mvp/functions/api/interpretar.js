@@ -12,6 +12,8 @@
 // (redactar el resumen de un reclamo, por ejemplo), se agrega su línea con el
 // modelo que esa tarea pida.
 
+import { abrirRun } from "./_ops.js";
+
 const MODELOS = {
   interpretar: "claude-haiku-4-5-20251001",
 };
@@ -190,8 +192,28 @@ export async function onRequestPost(context) {
   if (consulta.herramienta && !herramienta) {
     return json({ error: `El modelo pidió una herramienta que no existe: ${consulta.herramienta}` }, 502);
   }
+
+  // La interpretación la registra el server, no el navegador: es la parte que
+  // el server conoce con certeza, y así queda asentada aunque el cliente nunca
+  // llegue a ejecutar la consulta ni a reportar el resultado.
+  const estado = !consulta.herramienta ? "no_interpretado"
+    : !herramienta.disponible ? "sin_herramienta"
+    : "iniciado";
+
+  const runId = await abrirRun(env, {
+    cliente: "vendexchat",
+    store_id: storeId || null,
+    agente: consulta.herramienta || null,
+    input: texto,
+    interpretacion: consulta,
+    modelo: MODELOS.interpretar,
+    ajustes: consulta.ajustes || [],
+    herramienta: herramienta?.nombre || null,
+    estado,
+  });
+
   if (herramienta && !herramienta.disponible) {
-    return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo) }, 200);
+    return json({ ...consulta, disponible: false, catalogo: Boolean(catalogo), run_id: runId }, 200);
   }
 
   return json({
@@ -199,5 +221,6 @@ export async function onRequestPost(context) {
     empresa_id: resolverId(consulta.empresa, catalogo),
     disponible: true,
     catalogo: Boolean(catalogo),
+    run_id: runId,
   }, 200);
 }

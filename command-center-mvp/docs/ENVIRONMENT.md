@@ -57,8 +57,20 @@ entero (ver `PERMISSIONS.md`).
 ### Inteliar Ops — `xeqbapfjosgchkhqwzsh`
 
 Proyecto reutilizado ("Riweb.app"). Estaba prácticamente vacío: todas las tablas
-en 0 filas salvo `clients` (2) e `inbox_accounts` (1). Acá van a vivir los
-registros de ejecución, los errores y las correcciones del agente.
+en 0 filas salvo `clients` (2) e `inbox_accounts` (1).
+
+| Tabla | Qué guarda |
+|---|---|
+| `agent_runs` | Una fila por ejecución: entrada, interpretación, modelo usado, ajustes, herramienta, parámetros, estado, resultado, error y duración |
+| `agent_feedback` | La señal del operador: si el resultado fue correcto y, si no, qué esperaba |
+
+RLS activado, sin políticas públicas: solo el `service_role` escribe y lee.
+
+**La interpretación la registra el server** (`interpretar.js`), así que ninguna
+consulta queda sin rastro. **El resultado lo reporta el navegador**, así que un
+run puede quedar en `iniciado` si el browser se cerró a mitad de camino. Eso se
+resuelve cuando la orquestación pase al server, que es lo que va a exigir el
+proceso de facturación.
 
 ---
 
@@ -90,6 +102,7 @@ Cosas verificadas que hacen que un número parezca correcto sin serlo:
 | `AGENT_API_KEY` | Cloudflare Pages (Producción) + Supabase VendexChat | Lee los datos de **todas** las tiendas, no solo la elegida |
 | `ANTHROPIC_API_KEY` | Cloudflare Pages | Solo el intérprete |
 | `AGENTES_USER` / `AGENTES_PASS` | Cloudflare Pages | Login del panel |
+| `OPS_SERVICE_KEY` | Cloudflare Pages | `service_role` de Inteliar Ops. Escribe el registro — y alcanza también al token de WhatsApp de `inbox_accounts` |
 
 Ninguna llega al navegador. Todas se usan desde Pages Functions.
 
@@ -97,10 +110,8 @@ Ninguna llega al navegador. Todas se usan desde Pages Functions.
 
 ## Limitaciones
 
-- **Sin memoria.** Todo vive en la memoria del navegador y se pierde al recargar.
-  Esto bloquea observabilidad, evals y aprendizaje hasta que exista Inteliar Ops.
-- **Sin contexto conversacional.** Cada mensaje se interpreta aislado: "¿y de la
-  otra empresa?" no funciona.
+- **Sin memoria conversacional.** El registro ya existe, pero el intérprete no lo
+  lee: cada mensaje se sigue interpretando aislado.
 - **CORS.** Las Edge Functions solo aceptan origins de vendexchat. Por eso todo
   llamado sale del server y no del navegador.
 - **Una sola tienda por consulta.** No hay consultas cruzadas entre tiendas.

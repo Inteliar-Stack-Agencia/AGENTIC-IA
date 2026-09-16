@@ -371,8 +371,56 @@ async function handleDispatch(text) {
     FACTURACION: runConsultaPorPeriodo,
     GASTOS: runConsultaPorPeriodo,
   };
-  await TAREAS[code](agent, consulta);
+
+  // El run ya existe: lo abrió el intérprete del lado del server. Acá se cierra
+  // con lo que realmente pasó al ejecutar.
+  const arranque = Date.now();
+  agent.runId = consulta.run_id || null;
+  try {
+    await TAREAS[code](agent, consulta);
+    await cerrarRegistro(agent, {
+      estado: agent.status === "error" ? "error" : "ok",
+      resumen: agent.paso,
+      filas: agent.lastResult?.rows?.length ?? agent.lastResult?.filas?.length ?? agent.lastResult?.clients?.length ?? null,
+      error: agent.status === "error" ? agent.paso : null,
+      duracion_ms: Date.now() - arranque,
+      parametros: { empresa: consulta.empresa ?? null, empresa_id: consulta.empresa_id ?? null, desde: consulta.desde ?? null, hasta: consulta.hasta ?? null, store_id: state.config.storeId },
+    });
+  } catch (err) {
+    await cerrarRegistro(agent, { estado: "error", error: err.message, duracion_ms: Date.now() - arranque });
+    throw err;
+  }
   render();
+}
+
+// La señal que convierte el registro en algo de lo que se puede aprender. Sin
+// una marca explícita de "esto estuvo mal" no hay forma de distinguir una
+// consulta que salió bien de una que salió mal: solo queda una pila de texto.
+async function marcarResultado(correcto) {
+  const run = state.ultimoRun;
+  if (!run) return;
+
+  let comentario = null;
+  if (!correcto) {
+    comentario = prompt("¿Qué esperabas que hiciera? (opcional, pero es lo que después permite corregirlo)");
+    if (comentario === null) return; // canceló: no se marca nada
+  }
+
+  run.marcado = true;
+  const ok = await TOOLS.registro.call({ run_id: run.runId, tipo: "feedback", correcto, comentario });
+  addChat("NÚCLEO", ok
+    ? (correcto ? "Anotado como correcto." : "Anotado como incorrecto. Queda registrado con lo que esperabas.")
+    : "No pude guardar tu marca — el registro no está disponible.");
+  render();
+}
+
+async function cerrarRegistro(agent, datos) {
+  if (!agent.runId) return;
+  await TOOLS.registro.call({ run_id: agent.runId, ...datos });
+  // Se guarda el último run para que el operador pueda marcarlo como incorrecto
+  // después de verlo. Sin esa señal el registro solo acumula texto: no habría
+  // forma de distinguir una consulta que salió bien de una que salió mal.
+  state.ultimoRun = { runId: agent.runId, agente: agent.code, resumen: agent.paso };
 }
 
 // ── Layout orbital (posiciona los nodos alrededor del núcleo) ────────
@@ -545,6 +593,8 @@ document.getElementById("app").addEventListener("click", (e) => {
   if (action === "goto") { selectedAgentCode = null; state.hoveredAgent = null; state.screen = btn.dataset.screen; render(); }
   else if (action === "open-agent") { selectedAgentCode = btn.dataset.code; state.hoveredAgent = null; render(); }
   else if (action === "send-dispatch") { const input = document.getElementById("dispatchInput"); handleDispatch(input.value); }
+  else if (action === "feedback-ok") { marcarResultado(true); }
+  else if (action === "feedback-mal") { marcarResultado(false); }
   else if (action === "decide-approval") {
     const ap = state.approvals.find(a => a.id === btn.dataset.id);
     if (!ap) return;
