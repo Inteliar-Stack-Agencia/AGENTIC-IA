@@ -121,11 +121,13 @@ async function runPedidosTask(agent, consulta) {
   const to = consulta.hasta || null;
   const storeId = consulta.store_id_efectivo || state.config.storeId;
 
+  const sujeto = companyName ? `de ${companyName}` : "de toda la tienda";
+
   agent.status = "trabajando";
   agent.progress = 15;
-  agent.tarea = `Consultando pedidos de ${companyName}`;
+  agent.tarea = `Consultando pedidos ${sujeto}`;
   agent.paso = "Llamando a get-company-orders...";
-  pushLog(agent, `Consultando get-company-orders (empresa: "${companyName}"${from ? `, desde ${from}` : ""}${to ? `, hasta ${to}` : ""}).`);
+  pushLog(agent, `Consultando get-company-orders (${companyName ? `empresa: "${companyName}"` : "sin filtrar por empresa"}${from ? `, desde ${from}` : ""}${to ? `, hasta ${to}` : ""}).`);
   render();
 
   try {
@@ -135,15 +137,15 @@ async function runPedidosTask(agent, consulta) {
     agent.status = "completado";
     agent.lastResult = result;
     agent.paso = `Completado — ${result.count} pedido(s)`;
-    pushLog(agent, `${result.count} pedido(s) encontrados para "${result.companyName}". Total ${money(result.totalGeneral)}.`);
-    pushFeed(agent, `Encontró ${result.count} pedido(s) de ${result.companyName} (${money(result.totalGeneral)}).`, "ok");
+    pushLog(agent, `${result.count} pedido(s) encontrados ${sujeto}. Total ${money(result.totalGeneral)}.`);
+    pushFeed(agent, `Encontró ${result.count} pedido(s) ${sujeto} (${money(result.totalGeneral)}).`, "ok");
     const desglose = Object.entries(result.porEstado)
       .map(([estado, v]) => `${v.pedidos} ${estado} (${money(v.monto)})`)
       .join(", ");
     addChat("PEDIDOS", result.count === 0
-      ? `No encontré pedidos de "${result.companyName}" en ${storeName(storeId)}, ${describirRango(from, to)}.`
-      : `Encontré ${result.count} pedido(s) de ${result.companyName} en ${storeName(storeId)}, ${describirRango(from, to)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
-    showToast("PEDIDOS completó la tarea", `${result.count} pedidos de ${result.companyName}`);
+      ? `No encontré pedidos ${sujeto} en ${storeName(storeId)}, ${describirRango(from, to)}.`
+      : `Encontré ${result.count} pedido(s) ${sujeto} en ${storeName(storeId)}, ${describirRango(from, to)}, por ${money(result.totalGeneral)}. Por estado: ${desglose}. Podés ver el detalle y descargar el Excel en su ficha.`);
+    showToast("PEDIDOS completó la tarea", `${result.count} pedidos ${sujeto}`);
     setTimeout(() => {
       if (agent.status === "completado") { agent.status = "inactivo"; agent.progress = 0; render(); }
     }, 7000);
@@ -344,11 +346,8 @@ async function handleDispatch(text) {
     return;
   }
 
-  if (code === "PEDIDOS" && !consulta.empresa) {
-    addChat(code, "Entendí que querés consultar pedidos, pero no identifiqué de qué empresa. Decime el nombre y lo busco.");
-    render();
-    return;
-  }
+  // empresa es opcional: sin ella, PEDIDOS trae todos los pedidos de la tienda
+  // en el período. Ya no se exige acá.
 
   // Todo lo que el modelo decidió por su cuenta se declara antes de ejecutar: un
   // rango dado vuelta o una fecha inferida cambian el resultado, y si no se avisan

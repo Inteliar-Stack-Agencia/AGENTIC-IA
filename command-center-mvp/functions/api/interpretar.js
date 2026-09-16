@@ -27,10 +27,10 @@ const MODELOS = {
 const HERRAMIENTAS = [
   {
     nombre: "pedidos",
-    descripcion: "Pedidos de una empresa cliente: qué pidió cada persona, cuándo, qué productos y por cuánto.",
+    descripcion: "Pedidos de una tienda: qué pidió cada persona, cuándo, qué productos y por cuánto. Sin empresa, trae todos los pedidos del período (incluidos los de consumidor final).",
     disponible: true,
-    obligatorios: ["empresa"],
-    opcionales: ["desde", "hasta"],
+    obligatorios: [],
+    opcionales: ["empresa", "desde", "hasta"],
   },
   {
     nombre: "despachos",
@@ -135,7 +135,9 @@ Resolvé el nombre que dijo el usuario contra esa lista y devolvé en "empresa" 
 Si lo que escribió no se parece a ninguna de la lista, devolvé el texto tal cual y anotá en "ajustes" que esa empresa no figura entre las registradas. No la fuerces contra la más parecida si la diferencia es grande: es preferible que no aparezca a que traiga los datos de otra empresa.`
   : `No hay catálogo de empresas disponible en este momento, así que copiá el nombre tal como lo dijo el usuario, sin corregirlo. El emparejamiento difuso lo hace la herramienta.`}
 
-"interpretacion" la lee una persona que opera el panel, no un programador: escribila en una frase corta y concreta. Nunca describas tu propio funcionamiento, ni menciones "herramientas", "parámetros" ni "consultas estructuradas". Si algo no se puede responder, decí qué datos harían falta, en términos del negocio.`;
+"interpretacion" la lee una persona que opera el panel, no un programador: escribila en una frase corta y concreta. Nunca describas tu propio funcionamiento, ni menciones "herramientas", "parámetros" ni "consultas estructuradas". Si algo no se puede responder, decí qué datos harían falta, en términos del negocio.
+
+La sucursal (tienda) ya se resuelve antes de que veas este mensaje — no forma parte de lo que vos decidís ni es un parámetro de ninguna herramienta. No opines sobre si algo "filtra por ubicación" o no: eso pasa en otra capa y no tenés visibilidad de cómo se resolvió.`;
 }
 
 export async function onRequestPost(context) {

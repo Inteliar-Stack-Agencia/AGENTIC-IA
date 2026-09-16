@@ -115,9 +115,10 @@ const TOOLS = {
     key: "get-company-orders",
     async call({ storeId, companyName, from, to }) {
       if (!storeId) throw new Error("Falta elegir la tienda.");
-      if (!companyName) throw new Error("Falta el nombre de la empresa.");
 
-      const params = new URLSearchParams({ store_id: storeId, company_name: companyName });
+      // companyName es opcional: sin ella trae todos los pedidos de la tienda.
+      const params = new URLSearchParams({ store_id: storeId });
+      if (companyName) params.set("company_name", companyName);
       if (from) params.set("from", from);
       if (to) params.set("to", to);
 

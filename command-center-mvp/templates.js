@@ -227,7 +227,7 @@ function renderResultBox(r) {
   if (r.tipo === "periodo") return renderPeriodoBox(r);
   return `
   <div class="result-box">
-    <div class="result-title">Último resultado real — ${escapeHtml(r.companyName)}</div>
+    <div class="result-title">Último resultado real — ${r.companyName ? escapeHtml(r.companyName) : "todos los pedidos de la tienda"}</div>
     <div class="result-row"><span>Pedidos encontrados</span><span>${r.count}</span></div>
     <div class="result-row"><span>Líneas de producto</span><span>${r.rows.length}</span></div>
     ${Object.entries(r.porEstado || {}).map(([estado, v]) => `

@@ -41,11 +41,13 @@ export async function onRequestGet(context) {
   const to = url.searchParams.get("to");
 
   if (!UUID_RE.test(storeId)) return json({ error: "store_id inválido o faltante." }, 400);
-  if (!companyName) return json({ error: "company_name faltante." }, 400);
   if (from && !DATE_RE.test(from)) return json({ error: "from debe ser YYYY-MM-DD." }, 400);
   if (to && !DATE_RE.test(to)) return json({ error: "to debe ser YYYY-MM-DD." }, 400);
 
-  const params = new URLSearchParams({ store_id: storeId, company_name: companyName, limit: "200" });
+  // company_name es opcional: sin ella, trae todos los pedidos de la tienda en el
+  // rango, sin filtrar por empresa.
+  const params = new URLSearchParams({ store_id: storeId, limit: "200" });
+  if (companyName) params.set("company_name", companyName);
   if (from) params.set("from", from);
   if (to) params.set("to", to);
 
